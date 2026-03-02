@@ -7,6 +7,8 @@ export default defineConfig({
     react(),
   ],
   preview: {
+    port: 8080,
+    host: true,
     allowedHosts: ['.up.railway.app']
   }
 })
