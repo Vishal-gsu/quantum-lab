@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Atom, BookOpen, Zap, Binary, Cpu, 
+  Atom, BookOpen, Zap, Binary, 
   ChevronRight, Settings, BarChart3, 
-  Activity, Info, Layers, LayoutDashboard, Cpu as Chip,
-  Terminal, Sparkles, GraduationCap, ChevronLeft, Lock, Rocket, Image as ImageIcon
+  Activity, LayoutDashboard, Chip,
+  Terminal, Sparkles, ChevronLeft, Lock, Rocket, Image as ImageIcon
 } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
@@ -88,7 +88,7 @@ const App = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#020617] text-slate-200 overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#020617] text-slate-200 overflow-hidden font-sans selection:bg-blue-500/30">
       {/* Sidebar - Hover to expand */}
       <motion.aside 
         onMouseEnter={() => setSidebarCollapsed(false)}
@@ -112,7 +112,7 @@ const App = () => {
             <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'dashboard'} collapsed={sidebarCollapsed} onClick={() => { setActiveTab('dashboard'); setActiveExp(null); setActiveDoc(null); }} />
           </div>
           <div className="space-y-1">
-            {!sidebarCollapsed && <p className="px-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4">Laboratory</p>}
+            {!sidebarCollapsed && <p className="px-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 text-center">Laboratory</p>}
             {experiments.map(exp => (
               <SidebarItem key={exp.id} icon={exp.id === 'grover' ? Lock : exp.icon} label={exp.name} active={activeExp === exp.id} collapsed={sidebarCollapsed} onClick={() => { setActiveExp(exp.id); setActiveTab('experiment'); setActiveDoc(null); setResult(null); }} />
             ))}
@@ -217,8 +217,8 @@ const App = () => {
                                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff03" vertical={false} />
                                     <XAxis dataKey="name" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
                                     <YAxis stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
-                                    <Tooltip contentStyle={{ backgroundColor: '#020617', border: 'none', borderRadius: '15px', shadow: '0 10px 30px rgba(0,0,0,0.5)' }} />
-                                    <Area type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={5} fill="url(#colorVal)" dot={{ r: 6, fill: '#22c55e', strokeWidth: 2, stroke: '#020617' }} />
+                                    <Tooltip contentStyle={{ backgroundColor: '#020617', border: 'none', borderRadius: '15px' }} />
+                                    <Area type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={5} fill="url(#colorVal)" dot={{ r: 6, fill: '#22c55e' }} />
                                   </AreaChart>
                                 ) : (
                                   <BarChart data={result.chartData}>
@@ -227,7 +227,7 @@ const App = () => {
                                     <YAxis stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
                                     <Tooltip contentStyle={{ backgroundColor: '#020617', border: 'none', borderRadius: '15px' }} />
                                     <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={activeExp === 'qrng-8bit' ? 2 : 120}>
-                                      {result.chartData.map((e: any, i: number) => <Cell key={`c-${i}`} fill={i % 2 === 0 ? '#3b82f6' : '#6366f1'} />)}
+                                      {result.chartData.map((_e: any, i: number) => <Cell key={`c-${i}`} fill={i % 2 === 0 ? '#3b82f6' : '#6366f1'} />)}
                                     </Bar>
                                   </BarChart>
                                 )}
