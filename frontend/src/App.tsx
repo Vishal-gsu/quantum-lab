@@ -145,27 +145,12 @@ const App = () => {
           </div>
         </div>
 
-        {/* Connection Indicator & Credits */}
-        <div className="p-6 border-t border-white/5 bg-black/20 space-y-4">
+        {/* Connection Indicator in Sidebar */}
+        <div className="p-6 border-t border-white/5 bg-black/20">
            <div className={`flex items-center gap-3 px-3 py-2 rounded-xl border transition-colors ${backendStatus === 'online' ? 'bg-green-500/5 border-green-500/20 text-green-500' : 'bg-red-500/5 border-red-500/20 text-red-500'}`}>
               {backendStatus === 'online' ? <Wifi size={16} /> : <WifiOff size={16} />}
               {!sidebarCollapsed && <span className="text-[10px] font-black uppercase tracking-widest">{backendStatus === 'online' ? 'Backend Live' : 'Backend Offline'}</span>}
            </div>
-           
-           {!sidebarCollapsed && (
-             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-2">
-                <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-3">Architect</p>
-                <p className="text-sm font-black text-white mb-4">Vishal Gsu</p>
-                <div className="flex gap-4">
-                   <a href="https://github.com/Vishal-gsu" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-white transition-colors">
-                      <Rocket size={18} />
-                   </a>
-                   <a href="https://www.linkedin.com/in/vishal-gsu/" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-blue-400 transition-colors">
-                      <LayoutDashboard size={18} />
-                   </a>
-                </div>
-             </motion.div>
-           )}
         </div>
       </motion.aside>
 
@@ -222,6 +207,23 @@ const App = () => {
                     </button>
                   ))}
                 </div>
+
+                {/* Professional Credits Banner */}
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-12 p-8 rounded-[2.5rem] bg-white/5 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
+                   <div className="flex items-center gap-6">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                         <Rocket className="text-white" size={24} />
+                      </div>
+                      <div>
+                         <p className="text-[10px] font-black uppercase text-blue-500 tracking-[0.3em] mb-1">System Architect</p>
+                         <h4 className="text-xl font-black text-white tracking-tight">Vishal Gsu</h4>
+                      </div>
+                   </div>
+                   <div className="flex items-center gap-4">
+                      <a href="https://github.com/Vishal-gsu" target="_blank" rel="noopener noreferrer" className="px-6 py-3 rounded-xl bg-[#020617] border border-white/10 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white hover:border-white/20 transition-all">GitHub</a>
+                      <a href="https://www.linkedin.com/in/vishal-gsu/" target="_blank" rel="noopener noreferrer" className="px-6 py-3 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest hover:bg-blue-500 shadow-lg shadow-blue-500/20 transition-all">LinkedIn</a>
+                   </div>
+                </motion.div>
               </motion.div>
             )}
 
