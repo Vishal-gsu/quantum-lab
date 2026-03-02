@@ -275,7 +275,7 @@ const App = () => {
                                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff03" vertical={false} />
                                     <XAxis dataKey="name" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
                                     <YAxis stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
-                                    <Tooltip contentStyle={{ backgroundColor: '#020617', border: 'none', borderRadius: '15px', shadow: '0 10px 30px rgba(0,0,0,0.5)' }} />
+                                    <Tooltip contentStyle={{ backgroundColor: '#020617', border: 'none', borderRadius: '15px' }} />
                                     <Area type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={5} fill="url(#colorVal)" dot={{ r: 6, fill: '#22c55e', strokeWidth: 2, stroke: '#020617' }} />
                                   </AreaChart>
                                 ) : (
