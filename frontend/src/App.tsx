@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Atom, BookOpen, Zap, Binary, 
   ChevronRight, Settings, BarChart3, 
-  Activity, LayoutDashboard, Chip,
+  Activity, LayoutDashboard, Cpu as Chip,
   Terminal, Sparkles, ChevronLeft, Lock, Rocket, Image as ImageIcon
 } from 'lucide-react';
 import axios from 'axios';
