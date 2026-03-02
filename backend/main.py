@@ -22,6 +22,11 @@ simulator = Aer.get_backend('qasm_simulator')
 def get_circuit_text(qc):
     return str(qc.draw(output='text'))
 
+@app.get("/")
+@app.get("/health")
+def health_check():
+    return {"status": "online", "message": "Quantum Computing API v2.0 - Ready"}
+
 @app.get("/experiment/qrng-1bit")
 def qrng_1bit(shots: int = Query(1024, ge=1, le=10000)):
     try:
