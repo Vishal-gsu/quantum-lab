@@ -15,7 +15,6 @@ import {
 } from 'recharts';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-console.log("QuantumLab connecting to API at:", API_URL);
 
 const SidebarItem = ({ icon: Icon, label, active, onClick, collapsed }: any) => (
   <button
@@ -146,12 +145,27 @@ const App = () => {
           </div>
         </div>
 
-        {/* Connection Indicator in Sidebar */}
-        <div className="p-6 border-t border-white/5 bg-black/20">
+        {/* Connection Indicator & Credits */}
+        <div className="p-6 border-t border-white/5 bg-black/20 space-y-4">
            <div className={`flex items-center gap-3 px-3 py-2 rounded-xl border transition-colors ${backendStatus === 'online' ? 'bg-green-500/5 border-green-500/20 text-green-500' : 'bg-red-500/5 border-red-500/20 text-red-500'}`}>
               {backendStatus === 'online' ? <Wifi size={16} /> : <WifiOff size={16} />}
               {!sidebarCollapsed && <span className="text-[10px] font-black uppercase tracking-widest">{backendStatus === 'online' ? 'Backend Live' : 'Backend Offline'}</span>}
            </div>
+           
+           {!sidebarCollapsed && (
+             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-2">
+                <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-3">Architect</p>
+                <p className="text-sm font-black text-white mb-4">Vishal Gsu</p>
+                <div className="flex gap-4">
+                   <a href="https://github.com/Vishal-gsu" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-white transition-colors">
+                      <Rocket size={18} />
+                   </a>
+                   <a href="https://www.linkedin.com/in/vishal-gsu/" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-blue-400 transition-colors">
+                      <LayoutDashboard size={18} />
+                   </a>
+                </div>
+             </motion.div>
+           )}
         </div>
       </motion.aside>
 
