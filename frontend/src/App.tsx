@@ -4,7 +4,8 @@ import {
   Atom, BookOpen, Zap, Binary, 
   ChevronRight, Settings, BarChart3, 
   Activity, LayoutDashboard, Cpu as Chip,
-  Terminal, Sparkles, ChevronLeft, Lock, Rocket, Image as ImageIcon
+  Terminal, Sparkles, ChevronLeft, Lock, Rocket, Image as ImageIcon,
+  Wifi, WifiOff, AlertCircle
 } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
@@ -46,6 +47,8 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const docFiles = [
     { id: "00_Quick_Reference_Guide.md", title: "Quick Reference", time: "5 min", level: "Beginner" },
@@ -64,6 +67,21 @@ const App = () => {
     { id: 'grover', name: 'Grover\'s Search', icon: Rocket, color: '#f43f5e', status: 'WIP' },
   ];
 
+  // Health Check for Backend
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        await axios.get(`${API_URL}/`);
+        setBackendStatus('online');
+      } catch (err) {
+        setBackendStatus('offline');
+      }
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 10000); // Check every 10s
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (activeDoc) {
       fetch(`/src/assets/docs/${activeDoc}`)
@@ -77,19 +95,24 @@ const App = () => {
     if (id === 'grover') return;
     setLoading(true);
     setResult(null);
+    setErrorMsg(null);
     try {
       const endpoint = id === 'vqe-h2' ? `vqe-h2?steps=${Math.floor(Math.min(shots/20, 100)) || 15}` : `${id}?shots=${shots}`;
-      const res = await axios.get(`${API_URL}/experiment/${endpoint}`);
-      setResult(res.data);
-    } catch (err) {
-      setResult({ error: "Backend Connection Error" });
+      const res = await axios.get(`${API_URL}/experiment/${endpoint}`, { timeout: 30000 }); // 30s timeout
+      if (res.data.error) {
+        setErrorMsg(res.data.error);
+      } else {
+        setResult(res.data);
+      }
+    } catch (err: any) {
+      setErrorMsg(err.code === 'ECONNABORTED' ? "Simulation timed out. Try fewer shots/steps." : "Critical connection error. Check if backend is alive.");
     }
     setLoading(false);
   };
 
   return (
     <div className="flex h-screen bg-[#020617] text-slate-200 overflow-hidden font-sans selection:bg-blue-500/30">
-      {/* Sidebar - Hover to expand */}
+      {/* Sidebar */}
       <motion.aside 
         onMouseEnter={() => setSidebarCollapsed(false)}
         onMouseLeave={() => setSidebarCollapsed(true)}
@@ -114,12 +137,20 @@ const App = () => {
           <div className="space-y-1">
             {!sidebarCollapsed && <p className="px-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 text-center">Laboratory</p>}
             {experiments.map(exp => (
-              <SidebarItem key={exp.id} icon={exp.id === 'grover' ? Lock : exp.icon} label={exp.name} active={activeExp === exp.id} collapsed={sidebarCollapsed} onClick={() => { setActiveExp(exp.id); setActiveTab('experiment'); setActiveDoc(null); setResult(null); }} />
+              <SidebarItem key={exp.id} icon={exp.id === 'grover' ? Lock : exp.icon} label={exp.name} active={activeExp === exp.id} collapsed={sidebarCollapsed} onClick={() => { setActiveExp(exp.id); setActiveTab('experiment'); setActiveDoc(null); setResult(null); setErrorMsg(null); }} />
             ))}
           </div>
           <div className="space-y-1">
             <SidebarItem icon={BookOpen} label="Curriculum" active={activeTab === 'study'} collapsed={sidebarCollapsed} onClick={() => setActiveTab('study')} />
           </div>
+        </div>
+
+        {/* Connection Indicator in Sidebar */}
+        <div className="p-6 border-t border-white/5 bg-black/20">
+           <div className={`flex items-center gap-3 px-3 py-2 rounded-xl border transition-colors ${backendStatus === 'online' ? 'bg-green-500/5 border-green-500/20 text-green-500' : 'bg-red-500/5 border-red-500/20 text-red-500'}`}>
+              {backendStatus === 'online' ? <Wifi size={16} /> : <WifiOff size={16} />}
+              {!sidebarCollapsed && <span className="text-[10px] font-black uppercase tracking-widest">{backendStatus === 'online' ? 'Backend Live' : 'Backend Offline'}</span>}
+           </div>
         </div>
       </motion.aside>
 
@@ -127,8 +158,8 @@ const App = () => {
       <main className="flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent relative">
         <header className="h-24 border-b border-white/5 flex items-center justify-between px-12 sticky top-0 backdrop-blur-xl z-40 bg-[#020617]/60">
           <div className="flex items-center space-x-4">
-            <div className="h-2 w-2 rounded-full bg-blue-500 animate-ping" />
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Live Simulator</span>
+            <div className={`h-2 w-2 rounded-full animate-ping ${backendStatus === 'online' ? 'bg-blue-500' : 'bg-red-500'}`} />
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">API Status: {backendStatus.toUpperCase()}</span>
             <ChevronRight size={14} className="text-slate-700" />
             <span className="text-white font-black text-sm uppercase tracking-widest">{activeTab}</span>
           </div>
@@ -143,6 +174,16 @@ const App = () => {
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' && (
               <motion.div key="dashboard" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-12">
+                {backendStatus === 'offline' && (
+                  <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-3xl flex items-center gap-4 text-red-400">
+                    <AlertCircle size={24} />
+                    <div>
+                      <p className="font-black uppercase text-xs tracking-widest">Backend Connection Failure</p>
+                      <p className="text-sm opacity-70">The cloud simulator is not responding. Please verify the VITE_API_URL variable.</p>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="bg-[#0f172a]/40 p-16 rounded-[3rem] border border-white/5 backdrop-blur-sm relative overflow-hidden group">
                    <div className="relative z-10 space-y-6">
                       <div className="flex items-center space-x-3 text-blue-400 font-black text-xs uppercase tracking-[0.4em]">
@@ -177,12 +218,23 @@ const App = () => {
                     <h2 className="text-5xl font-black tracking-tighter text-white">{experiments.find(e => e.id === activeExp)?.name}</h2>
                   </div>
                   {activeExp !== 'grover' && (
-                    <button onClick={() => runExperiment(activeExp)} disabled={loading} className="bg-white text-black hover:bg-blue-600 hover:text-white disabled:opacity-50 px-12 py-5 rounded-2xl font-black transition-all shadow-2xl flex items-center space-x-4 uppercase tracking-widest text-sm">
+                    <button onClick={() => runExperiment(activeExp)} disabled={loading || backendStatus === 'offline'} className={`px-12 py-5 rounded-2xl font-black transition-all shadow-2xl flex items-center space-x-4 uppercase tracking-widest text-sm ${backendStatus === 'offline' ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-white text-black hover:bg-blue-600 hover:text-white'}`}>
                       {loading ? <Activity className="animate-spin" size={20} /> : <Zap size={20} />}
-                      <span>{loading ? 'Simulating...' : 'Run Protocol'}</span>
+                      <span>{loading ? 'Simulating...' : (backendStatus === 'offline' ? 'Offline' : 'Run Protocol')}</span>
                     </button>
                   )}
                 </div>
+
+                {errorMsg && (
+                  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-red-500/10 border border-red-500/20 p-8 rounded-[2.5rem] flex items-start gap-6 text-red-400">
+                    <AlertCircle size={32} className="shrink-0" />
+                    <div>
+                      <h4 className="font-black uppercase tracking-widest text-sm mb-2 text-red-500">Execution Error</h4>
+                      <p className="text-lg font-medium">{errorMsg}</p>
+                      <p className="text-xs mt-4 opacity-60">Check the backend logs in Railway for trace details.</p>
+                    </div>
+                  </motion.div>
+                )}
 
                 {activeExp === 'grover' ? (
                   <div className="bg-slate-900 border border-white/5 rounded-[4rem] p-32 text-center space-y-8 relative overflow-hidden">
@@ -206,7 +258,13 @@ const App = () => {
                        )}
 
                        {/* Results Visualization */}
-                       <div className="bg-slate-900/50 border border-white/5 rounded-[3rem] p-14 backdrop-blur-md shadow-inner">
+                       <div className="bg-slate-900/50 border border-white/5 rounded-[3rem] p-14 backdrop-blur-md shadow-inner relative">
+                          {loading && (
+                            <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-sm rounded-[3rem] flex flex-col items-center justify-center space-y-6">
+                               <div className="w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                               <p className="font-black text-xs uppercase tracking-[0.5em] animate-pulse">Computing Hilbert Space...</p>
+                            </div>
+                          )}
                           <h3 className="text-xs font-black uppercase tracking-[0.5em] text-slate-500 mb-12 flex items-center gap-4"><BarChart3 size={20} className="text-blue-500" /> Statistical Amplitude Distribution</h3>
                           <div className="w-full h-[400px]">
                             {result && result.chartData ? (
@@ -217,8 +275,8 @@ const App = () => {
                                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff03" vertical={false} />
                                     <XAxis dataKey="name" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
                                     <YAxis stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
-                                    <Tooltip contentStyle={{ backgroundColor: '#020617', border: 'none', borderRadius: '15px' }} />
-                                    <Area type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={5} fill="url(#colorVal)" dot={{ r: 6, fill: '#22c55e' }} />
+                                    <Tooltip contentStyle={{ backgroundColor: '#020617', border: 'none', borderRadius: '15px', shadow: '0 10px 30px rgba(0,0,0,0.5)' }} />
+                                    <Area type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={5} fill="url(#colorVal)" dot={{ r: 6, fill: '#22c55e', strokeWidth: 2, stroke: '#020617' }} />
                                   </AreaChart>
                                 ) : (
                                   <BarChart data={result.chartData}>
@@ -233,7 +291,7 @@ const App = () => {
                                 )}
                               </ResponsiveContainer>
                             ) : (
-                              <div className="h-full flex flex-col items-center justify-center space-y-8"><Activity size={80} className="animate-pulse text-blue-500 opacity-20" /><p className="font-black text-[10px] uppercase tracking-[0.5em] text-slate-600">Awaiting Signal from Backend...</p></div>
+                              <div className="h-full flex flex-col items-center justify-center space-y-8"><Activity size={80} className="text-slate-800 opacity-20" /><p className="font-black text-[10px] uppercase tracking-[0.5em] text-slate-700">Protocol Not Started</p></div>
                             )}
                           </div>
                        </div>
@@ -242,13 +300,9 @@ const App = () => {
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="bg-[#020617] border border-white/5 rounded-[3rem] p-10 relative overflow-hidden group min-h-[350px]">
                             <h3 className="text-xs font-black uppercase tracking-[0.4em] text-slate-500 mb-8 flex items-center gap-3"><ImageIcon size={18} className="text-blue-500" /> Circuit Blueprint</h3>
-                            {/* PLACEHOLDER FOR YOUR AI IMAGE */}
                             <div className="w-full h-48 bg-slate-900/50 rounded-2xl border border-white/5 flex flex-col items-center justify-center text-center p-6">
                                <Sparkles size={32} className="text-slate-700 mb-4" />
-                               <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Generate AI Image with provided prompt and place in src/assets/circuit-{activeExp}.png</p>
-                            </div>
-                            <div className="mt-6 text-[10px] font-bold text-slate-600 bg-white/5 p-3 rounded-lg border border-white/10 uppercase tracking-widest">
-                               Reference Model: ISO-8001 Quantum
+                               <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">circuit-{activeExp}.png placeholder</p>
                             </div>
                           </div>
 
