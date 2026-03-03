@@ -6,3 +6,4 @@ pennylane
 scipy
 numpy
 pydantic
+slowapi
