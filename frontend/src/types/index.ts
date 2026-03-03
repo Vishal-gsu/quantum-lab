@@ -24,6 +24,11 @@ export interface ExperimentResult {
     shots?: number;
     finalEnergy?: number;
     molecule?: string;
+    finalAccuracy?: number;
+    dataset?: string;
+    teleportedState?: string;
+    targetState?: string;
+    iterations?: number;
 }
 
 // ---------------------------------------------------------------------------

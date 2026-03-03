@@ -229,6 +229,155 @@ async def vqe_h2(request: Request, steps: int = Query(15, ge=1, le=100)):
 
 
 # ===========================================================================
+# Experiment: Grover's Search (2-qubit, target |11⟩)
+# ===========================================================================
+@app.get("/experiment/grover")
+@limiter.limit("20/minute")
+def grover_search(
+    request: Request,
+    shots: int = Query(1024, ge=1, le=10000),
+    iterations: int = Query(1, ge=1, le=5),
+):
+    logger.info("Grover | shots=%d iterations=%d", shots, iterations)
+    try:
+        qc = QuantumCircuit(2, 2)
+
+        # Superposition
+        qc.h([0, 1])
+
+        for _ in range(iterations):
+            # Oracle — marks |11⟩ with a phase flip
+            qc.cz(0, 1)
+
+            # Diffusion operator
+            qc.h([0, 1])
+            qc.x([0, 1])
+            qc.cz(0, 1)
+            qc.x([0, 1])
+            qc.h([0, 1])
+
+        qc.measure([0, 1], [0, 1])
+
+        job = simulator.run(
+            transpile(qc, simulator, optimization_level=3), shots=shots
+        )
+        counts = job.result().get_counts()
+
+        states = ["00", "01", "10", "11"]
+        chart_data = [
+            {"name": f"|{s}⟩", "value": counts.get(s, 0)} for s in states
+        ]
+
+        return {
+            "counts": counts,
+            "chartData": chart_data,
+            "circuit": get_circuit_text(qc),
+            "theory": (
+                "Grover's algorithm provides a quadratic speedup for unstructured search. "
+                "The oracle marks the target state |11⟩ with a phase flip, and the "
+                "diffusion operator amplifies its probability amplitude. For N=4 states, "
+                "a single iteration achieves ~100% success probability."
+            ),
+            "shots": shots,
+            "targetState": "|11⟩",
+            "iterations": iterations,
+        }
+    except Exception as e:
+        logger.exception("Grover failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===========================================================================
+# Experiment: Quantum Teleportation (3-qubit Bell protocol)
+# ===========================================================================
+@app.get("/experiment/teleportation")
+@limiter.limit("20/minute")
+def teleportation(request: Request, shots: int = Query(1024, ge=1, le=10000)):
+    logger.info("Teleportation | shots=%d", shots)
+    try:
+        qc = QuantumCircuit(3, 3)
+
+        # Step 1: Prepare the state to teleport on q0 (|1⟩)
+        qc.x(0)
+        qc.barrier()
+
+        # Step 2: Create Bell pair between q1 and q2
+        qc.h(1)
+        qc.cx(1, 2)
+        qc.barrier()
+
+        # Step 3: Alice's Bell measurement on q0, q1
+        qc.cx(0, 1)
+        qc.h(0)
+        qc.barrier()
+
+        # Step 4: Measure Alice's qubits (classical communication)
+        qc.measure(0, 0)
+        qc.measure(1, 1)
+
+        # Step 5: Bob's corrections (conditioned on classical bits)
+        qc.cx(1, 2)
+        qc.cz(0, 2)
+
+        # Step 6: Measure Bob's qubit to verify teleportation
+        qc.measure(2, 2)
+
+        job = simulator.run(
+            transpile(qc, simulator, optimization_level=3), shots=shots
+        )
+        counts = job.result().get_counts()
+
+        # Analyse Bob's qubit (bit index 2 in the result string)
+        bob_0, bob_1 = 0, 0
+        for bitstring, count in counts.items():
+            # Qiskit bit ordering: bitstring is c2c1c0
+            bob_bit = bitstring[0]  # leftmost = c2 (Bob's)
+            if bob_bit == "0":
+                bob_0 += count
+            else:
+                bob_1 += count
+
+        chart_data = [
+            {"name": "Bob |0⟩", "value": bob_0},
+            {"name": "Bob |1⟩", "value": bob_1},
+        ]
+
+        return {
+            "counts": counts,
+            "chartData": chart_data,
+            "circuit": get_circuit_text(qc),
+            "theory": (
+                "Quantum teleportation transfers a quantum state using entanglement "
+                "and 2 classical bits — without physically moving the qubit. Alice "
+                "prepared |1⟩ and teleported it to Bob. The chart should show Bob's "
+                "qubit measured as |1⟩ with ~100% probability, proving successful "
+                "teleportation. The no-cloning theorem prevents copying, but "
+                "teleportation destroys Alice's original state."
+            ),
+            "shots": shots,
+            "teleportedState": "|1⟩",
+        }
+    except Exception as e:
+        logger.exception("Teleportation failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===========================================================================
+# Experiment: VQC Binary Classifier — WIP
+# Blocked by PennyLane/autograd tensor shape compatibility issue.
+# StronglyEntanglingLayers and manual Rot gates both fail during
+# autograd differentiation. Will be fixed in a future PennyLane update.
+# ===========================================================================
+@app.get("/experiment/vqc")
+@limiter.limit("5/minute")
+def vqc_placeholder(request: Request):
+    raise HTTPException(
+        status_code=501,
+        detail="VQC Classifier is under development — coming in v2.1",
+    )
+
+
+# ===========================================================================
 # Entry point
 # ===========================================================================
 if __name__ == "__main__":

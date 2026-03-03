@@ -7,3 +7,4 @@ scipy
 numpy
 pydantic
 slowapi
+scikit-learn

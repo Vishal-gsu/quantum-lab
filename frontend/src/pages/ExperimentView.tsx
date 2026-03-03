@@ -40,10 +40,10 @@ export default function ExperimentView({ backendStatus, shots }: ExperimentViewP
                     <button onClick={() => navigate('/')} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-white mb-4"><ChevronLeft size={14} /> Back to Dashboard</button>
                     <h2 className="text-5xl font-black tracking-tighter text-white">{exp.name}</h2>
                 </div>
-                {exp.id !== 'grover' && (
+                {exp.status !== 'WIP' && (
                     <button onClick={() => run(exp.id, shots)} disabled={loading || backendStatus === 'offline'} className={`px-12 py-5 rounded-2xl font-black transition-all shadow-2xl flex items-center space-x-4 uppercase tracking-widest text-sm ${backendStatus === 'offline' ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-white text-black hover:bg-blue-600 hover:text-white'}`}>
                         {loading ? <Activity className="animate-spin" size={20} /> : <Zap size={20} />}
-                        <span>{loading ? 'Simulating...' : (backendStatus === 'offline' ? 'Offline' : 'Run Protocol')}</span>
+                        <span>{loading ? (id === 'vqe-h2' ? 'Training...' : 'Simulating...') : (backendStatus === 'offline' ? 'Offline' : 'Run Protocol')}</span>
                     </button>
                 )}
             </div>
@@ -60,13 +60,12 @@ export default function ExperimentView({ backendStatus, shots }: ExperimentViewP
                 </motion.div>
             )}
 
-            {/* Feature Locked */}
-            {exp.id === 'grover' ? (
+            {exp.status === 'WIP' ? (
                 <div className="bg-slate-900 border border-white/5 rounded-[4rem] p-32 text-center space-y-8 relative overflow-hidden">
-                    <Rocket size={100} className="mx-auto text-red-500 animate-pulse" />
-                    <h3 className="text-4xl font-black">Feature Locked</h3>
-                    <p className="text-slate-500 max-w-lg mx-auto text-xl">We are currently integrating the Oracle logic for Grover's Unstructured Search. Check back soon for the 2.0 update!</p>
-                    <div className="absolute inset-0 bg-gradient-to-t from-red-500/5 to-transparent pointer-events-none" />
+                    <Rocket size={100} className="mx-auto text-orange-500 animate-pulse" />
+                    <h3 className="text-4xl font-black">Coming Soon</h3>
+                    <p className="text-slate-500 max-w-lg mx-auto text-xl">This experiment is under active development. We're resolving compatibility issues with the quantum ML framework. Check back in the next release!</p>
+                    <div className="absolute inset-0 bg-gradient-to-t from-orange-500/5 to-transparent pointer-events-none" />
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
@@ -94,14 +93,14 @@ export default function ExperimentView({ backendStatus, shots }: ExperimentViewP
                             <div className="w-full h-[400px]">
                                 {result?.chartData ? (
                                     <ResponsiveContainer width="100%" height="100%">
-                                        {id === 'vqe-h2' ? (
+                                        {(id === 'vqe-h2' || id === 'vqc') ? (
                                             <AreaChart data={result.chartData}>
-                                                <defs><linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} /><stop offset="95%" stopColor="#22c55e" stopOpacity={0} /></linearGradient></defs>
+                                                <defs><linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={id === 'vqc' ? '#f97316' : '#22c55e'} stopOpacity={0.2} /><stop offset="95%" stopColor={id === 'vqc' ? '#f97316' : '#22c55e'} stopOpacity={0} /></linearGradient></defs>
                                                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff03" vertical={false} />
                                                 <XAxis dataKey="name" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
                                                 <YAxis stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
                                                 <Tooltip contentStyle={{ backgroundColor: '#020617', border: 'none', borderRadius: '15px' }} />
-                                                <Area type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={5} fill="url(#colorVal)" dot={{ r: 6, fill: '#22c55e', strokeWidth: 2, stroke: '#020617' }} />
+                                                <Area type="monotone" dataKey="value" stroke={id === 'vqc' ? '#f97316' : '#22c55e'} strokeWidth={5} fill="url(#colorVal)" dot={{ r: 6, fill: id === 'vqc' ? '#f97316' : '#22c55e', strokeWidth: 2, stroke: '#020617' }} />
                                             </AreaChart>
                                         ) : (
                                             <BarChart data={result.chartData}>
@@ -150,6 +149,7 @@ export default function ExperimentView({ backendStatus, shots }: ExperimentViewP
                                     <div key={i.l} className="flex flex-col gap-2 border-b border-white/5 pb-6 last:border-0"><span className="text-[9px] text-slate-600 font-black uppercase tracking-[0.2em]">{i.l}</span><span className="text-xs font-black text-white">{i.v}</span></div>
                                 ))}
                                 {result?.finalEnergy && <div className="pt-6"><p className="text-[9px] font-black text-green-500 uppercase tracking-widest mb-3">Ground State Potential</p><p className="text-5xl font-black text-white tracking-tighter">{result.finalEnergy.toFixed(5)} <span className="text-xs text-slate-500 font-bold">Ha</span></p></div>}
+                                {result?.finalAccuracy != null && <div className="pt-6"><p className="text-[9px] font-black text-orange-500 uppercase tracking-widest mb-3">Classification Accuracy</p><p className="text-5xl font-black text-white tracking-tighter">{(result.finalAccuracy * 100).toFixed(1)}<span className="text-xs text-slate-500 font-bold">%</span></p></div>}
                             </div>
                         </div>
                     </div>
