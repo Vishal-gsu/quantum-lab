@@ -4,6 +4,9 @@ import { motion } from 'framer-motion';
 import { BookOpen, ChevronRight, ChevronLeft, Clock, ArrowUp, Hash } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { markdownComponents, extractHeadings } from '../components/MarkdownRenderer';
 import { docFiles } from '../lib/constants';
 
@@ -21,8 +24,8 @@ function TableOfContents({ headings, activeId }: { headings: { id: string; text:
                     key={h.id}
                     href={`#${h.id}`}
                     className={`block text-sm py-1.5 transition-all border-l-2 ${activeId === h.id
-                            ? 'text-blue-400 border-blue-500 font-bold'
-                            : 'text-slate-500 border-transparent hover:text-slate-300 hover:border-slate-700'
+                        ? 'text-blue-400 border-blue-500 font-bold'
+                        : 'text-slate-500 border-transparent hover:text-slate-300 hover:border-slate-700'
                         }`}
                     style={{ paddingLeft: `${(h.level - 1) * 16 + 16}px` }}
                 >
@@ -161,7 +164,7 @@ export default function StudyView() {
                     {/* Main content */}
                     <div ref={contentRef} className="flex-1 min-w-0 bg-slate-900/30 border border-white/5 rounded-[3rem] p-16 backdrop-blur-sm shadow-2xl">
                         {docContent ? (
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={markdownComponents}>
                                 {docContent}
                             </ReactMarkdown>
                         ) : (
