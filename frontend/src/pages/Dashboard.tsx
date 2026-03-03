@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import {
     Sparkles, Atom, ChevronRight, Rocket, AlertCircle,
 } from 'lucide-react';
-import { experiments } from '../lib/constants';
-import type { BackendStatus } from '../types';
+import { experiments } from '../lib/constants.ts';
+import type { BackendStatus, ExperimentConfig } from '../types/index.ts';
 
 interface DashboardProps {
     backendStatus: BackendStatus;
@@ -40,7 +40,7 @@ export default function Dashboard({ backendStatus }: DashboardProps) {
 
             {/* Experiment Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {experiments.map(exp => (
+                {experiments.map((exp: ExperimentConfig) => (
                     <button key={exp.id} onClick={() => navigate(`/experiment/${exp.id}`)} className="bg-white/5 p-10 rounded-[2.5rem] border border-white/5 hover:border-blue-500/40 transition-all text-left group relative overflow-hidden shadow-2xl">
                         {exp.status === 'WIP' && <span className="absolute top-6 right-6 px-3 py-1 bg-red-500/10 text-red-500 text-[10px] font-black rounded-full border border-red-500/20 uppercase tracking-widest">In Progress</span>}
                         <div className="p-4 rounded-2xl mb-8 w-fit bg-[#020617] border border-white/10 shadow-xl group-hover:scale-110 transition-transform">

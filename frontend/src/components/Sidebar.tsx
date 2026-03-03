@@ -4,8 +4,8 @@ import {
     Atom, BookOpen, LayoutDashboard, Lock,
     Wifi, WifiOff,
 } from 'lucide-react';
-import { experiments } from '../lib/constants';
-import type { BackendStatus } from '../types';
+import { experiments } from '../lib/constants.ts';
+import type { BackendStatus, ExperimentConfig } from '../types/index.ts';
 
 // ---------------------------------------------------------------------------
 // SidebarItem
@@ -86,7 +86,7 @@ export default function Sidebar({ collapsed, onMouseEnter, onMouseLeave, backend
 
                 <div className="space-y-1">
                     {!collapsed && <p className="px-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 text-center">Laboratory</p>}
-                    {experiments.map(exp => (
+                    {experiments.map((exp: ExperimentConfig) => (
                         <SidebarItem
                             key={exp.id}
                             icon={exp.id === 'grover' ? Lock : exp.icon}

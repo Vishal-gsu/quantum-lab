@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { api } from '../lib/api';
-import type { BackendStatus } from '../types';
+import { api } from '../lib/api.ts';
+import type { BackendStatus } from '../types/index.ts';
 
 /**
  * Polls the backend health endpoint every 10 s.

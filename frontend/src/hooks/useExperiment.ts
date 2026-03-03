@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { api } from '../lib/api';
-import type { ExperimentResult } from '../types';
+import { api } from '../lib/api.ts';
+import type { ExperimentResult } from '../types/index.ts';
 
 interface UseExperimentReturn {
     result: ExperimentResult | null;

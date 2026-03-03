@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import Dashboard from './pages/Dashboard';
-import ExperimentView from './pages/ExperimentView';
-import StudyView from './pages/StudyView';
-import { useBackendHealth } from './hooks/useBackendHealth';
+import Sidebar from './components/Sidebar.tsx';
+import Header from './components/Header.tsx';
+import Dashboard from './pages/Dashboard.tsx';
+import ExperimentView from './pages/ExperimentView.tsx';
+import StudyView from './pages/StudyView.tsx';
+import { useBackendHealth } from './hooks/useBackendHealth.ts';
 
 import './App.css';
 

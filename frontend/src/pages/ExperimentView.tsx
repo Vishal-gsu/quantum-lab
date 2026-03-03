@@ -9,9 +9,9 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, AreaChart, Area, Cell,
 } from 'recharts';
-import { experiments } from '../lib/constants';
-import { useExperiment } from '../hooks/useExperiment';
-import type { BackendStatus } from '../types';
+import { experiments } from '../lib/constants.ts';
+import { useExperiment } from '../hooks/useExperiment.ts';
+import type { BackendStatus, ExperimentConfig } from '../types/index.ts';
 
 interface ExperimentViewProps {
     backendStatus: BackendStatus;
@@ -22,7 +22,7 @@ export default function ExperimentView({ backendStatus, shots }: ExperimentViewP
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { result, loading, errorMsg, run, reset } = useExperiment();
-    const exp = experiments.find(e => e.id === id);
+    const exp = experiments.find((e: ExperimentConfig) => e.id === id);
 
     // Reset result when switching experiments via URL
     useEffect(() => { reset(); }, [id, reset]);

@@ -7,8 +7,9 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { markdownComponents, extractHeadings } from '../components/MarkdownRenderer';
-import { docFiles } from '../lib/constants';
+import { markdownComponents, extractHeadings } from '../components/MarkdownRenderer.tsx';
+import { docFiles } from '../lib/constants.ts';
+import type { DocFile } from '../types/index.ts';
 
 // ---------------------------------------------------------------------------
 // Table of Contents component
@@ -120,7 +121,7 @@ export default function StudyView() {
     }, []);
 
     // Find prev/next modules
-    const currentDocIndex = docFiles.findIndex(d => d.id === docId);
+    const currentDocIndex = docFiles.findIndex((d: DocFile) => d.id === docId);
     const prevDoc = currentDocIndex > 0 ? docFiles[currentDocIndex - 1] : null;
     const nextDoc = currentDocIndex < docFiles.length - 1 ? docFiles[currentDocIndex + 1] : null;
 
@@ -145,14 +146,14 @@ export default function StudyView() {
                         </div>
                         <div>
                             <h1 className="text-3xl font-black text-white tracking-tight">
-                                {docFiles.find(d => d.id === docId)?.title || 'Document'}
+                                {docFiles.find((d: DocFile) => d.id === docId)?.title || 'Document'}
                             </h1>
                             <div className="flex items-center gap-4 mt-2">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
-                                    <Clock size={10} /> {docFiles.find(d => d.id === docId)?.time || '–'}
+                                    <Clock size={10} /> {docFiles.find((d: DocFile) => d.id === docId)?.time || '–'}
                                 </span>
                                 <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">
-                                    {docFiles.find(d => d.id === docId)?.level || '–'}
+                                    {docFiles.find((d: DocFile) => d.id === docId)?.level || '–'}
                                 </span>
                             </div>
                         </div>
@@ -220,7 +221,7 @@ export default function StudyView() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                {docFiles.map((doc, index) => (
+                {docFiles.map((doc: DocFile, index: number) => (
                     <button key={doc.id} onClick={() => navigate(`/study/${doc.id}`)} className="bg-white/5 p-12 rounded-[3.5rem] border border-white/5 hover:border-blue-500/40 hover:bg-white/[0.08] transition-all text-left group shadow-xl relative overflow-hidden">
                         {/* Module number badge */}
                         <div className="absolute top-8 right-8 text-[80px] font-black text-white/[0.02] leading-none select-none">
