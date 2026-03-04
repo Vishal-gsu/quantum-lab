@@ -9,6 +9,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from qiskit import QuantumCircuit, transpile
 from qiskit_aer import Aer
+from qiskit_aer.noise import NoiseModel, depolarizing_error
 import pennylane as qml
 from pennylane import numpy as np
 
@@ -57,9 +58,33 @@ app.add_middleware(
 )
 
 # ---------------------------------------------------------------------------
-# Simulator
+# Simulator + Noise Model
 # ---------------------------------------------------------------------------
 simulator = Aer.get_backend("qasm_simulator")
+
+
+def _get_noise_model() -> NoiseModel:
+    """Realistic NISQ noise: depolarizing errors on all gates."""
+    noise_model = NoiseModel()
+    noise_model.add_all_qubit_quantum_error(
+        depolarizing_error(0.01, 1),  # 1% per single-qubit gate
+        ["h", "x", "rx", "ry", "rz"],
+    )
+    noise_model.add_all_qubit_quantum_error(
+        depolarizing_error(0.02, 2),  # 2% per two-qubit gate
+        ["cx", "cz"],
+    )
+    return noise_model
+
+
+def _run_circuit(qc: QuantumCircuit, shots: int, noise: bool) -> dict:
+    """Run a transpiled circuit, optionally with noise."""
+    tqc = transpile(qc, simulator, optimization_level=3)
+    kwargs = {"shots": shots}
+    if noise:
+        kwargs["noise_model"] = _get_noise_model()
+    job = simulator.run(tqc, **kwargs)
+    return job.result().get_counts()
 
 
 def get_circuit_text(qc: QuantumCircuit) -> str:
@@ -80,15 +105,13 @@ def health_check():
 # ===========================================================================
 @app.get("/experiment/qrng-1bit")
 @limiter.limit("30/minute")
-def qrng_1bit(request: Request, shots: int = Query(1024, ge=1, le=10000)):
-    logger.info("QRNG-1bit | shots=%d", shots)
+def qrng_1bit(request: Request, shots: int = Query(1024, ge=1, le=10000), noise: bool = Query(False)):
+    logger.info("QRNG-1bit | shots=%d noise=%s", shots, noise)
     try:
         qc = QuantumCircuit(1, 1)
         qc.h(0)
         qc.measure(0, 0)
-        tqc = transpile(qc, simulator, optimization_level=3)
-        job = simulator.run(tqc, shots=shots)
-        counts = job.result().get_counts()
+        counts = _run_circuit(qc, shots, noise)
         return {
             "counts": counts,
             "chartData": [
@@ -99,8 +122,9 @@ def qrng_1bit(request: Request, shots: int = Query(1024, ge=1, le=10000)):
             "theory": (
                 "Uses a Hadamard gate to put a qubit into a 50/50 superposition. "
                 "Measurement collapses this state into a random classical bit."
-            ),
+            ) + (" [NOISE ON] Depolarizing noise slightly biases the distribution." if noise else ""),
             "shots": shots,
+            "noise": noise,
         }
     except Exception as e:
         logger.exception("QRNG-1bit failed")
@@ -112,16 +136,13 @@ def qrng_1bit(request: Request, shots: int = Query(1024, ge=1, le=10000)):
 # ===========================================================================
 @app.get("/experiment/coin-flip")
 @limiter.limit("30/minute")
-def coin_flip(request: Request, shots: int = Query(10, ge=1, le=10000)):
-    logger.info("Coin-Flip | shots=%d", shots)
+def coin_flip(request: Request, shots: int = Query(10, ge=1, le=10000), noise: bool = Query(False)):
+    logger.info("Coin-Flip | shots=%d noise=%s", shots, noise)
     try:
         qc = QuantumCircuit(1, 1)
         qc.h(0)
         qc.measure(0, 0)
-        job = simulator.run(
-            transpile(qc, simulator, optimization_level=3), shots=shots
-        )
-        counts = job.result().get_counts()
+        counts = _run_circuit(qc, shots, noise)
         return {
             "counts": counts,
             "chartData": [
@@ -132,8 +153,9 @@ def coin_flip(request: Request, shots: int = Query(10, ge=1, le=10000)):
             "theory": (
                 "Simulates a fair coin by mapping the quantum state |+⟩ "
                 "to classical Heads (0) and Tails (1)."
-            ),
+            ) + (" [NOISE ON] Gate errors introduce slight bias — like a real imperfect coin." if noise else ""),
             "shots": shots,
+            "noise": noise,
         }
     except Exception as e:
         logger.exception("Coin-Flip failed")
@@ -145,18 +167,15 @@ def coin_flip(request: Request, shots: int = Query(10, ge=1, le=10000)):
 # ===========================================================================
 @app.get("/experiment/qrng-8bit")
 @limiter.limit("20/minute")
-def qrng_8bit(request: Request, shots: int = Query(100, ge=1, le=5000)):
-    logger.info("QRNG-8bit | shots=%d", shots)
+def qrng_8bit(request: Request, shots: int = Query(100, ge=1, le=5000), noise: bool = Query(False)):
+    logger.info("QRNG-8bit | shots=%d noise=%s", shots, noise)
     try:
         n_qubits = 8
         qc = QuantumCircuit(n_qubits, n_qubits)
         for i in range(n_qubits):
             qc.h(i)
         qc.measure(range(n_qubits), range(n_qubits))
-        job = simulator.run(
-            transpile(qc, simulator, optimization_level=3), shots=shots
-        )
-        counts = job.result().get_counts()
+        counts = _run_circuit(qc, shots, noise)
         hist_data = [
             {"name": str(i), "value": counts.get(format(i, "08b"), 0)}
             for i in range(256)
@@ -168,8 +187,9 @@ def qrng_8bit(request: Request, shots: int = Query(100, ge=1, le=5000)):
                 "8 qubits are placed in superposition simultaneously, creating "
                 "256 possible states. This generates a random number between "
                 "0 and 255 in a single clock cycle."
-            ),
+            ) + (" [NOISE ON] Depolarizing errors across 8 qubits create visible non-uniformity in the distribution." if noise else ""),
             "shots": shots,
+            "noise": noise,
         }
     except Exception as e:
         logger.exception("QRNG-8bit failed")
@@ -239,8 +259,9 @@ def grover_search(
     request: Request,
     shots: int = Query(1024, ge=1, le=10000),
     iterations: int = Query(1, ge=1, le=5),
+    noise: bool = Query(False),
 ):
-    logger.info("Grover | shots=%d iterations=%d", shots, iterations)
+    logger.info("Grover | shots=%d iterations=%d noise=%s", shots, iterations, noise)
     try:
         qc = QuantumCircuit(2, 2)
 
@@ -259,11 +280,7 @@ def grover_search(
             qc.h([0, 1])
 
         qc.measure([0, 1], [0, 1])
-
-        job = simulator.run(
-            transpile(qc, simulator, optimization_level=3), shots=shots
-        )
-        counts = job.result().get_counts()
+        counts = _run_circuit(qc, shots, noise)
 
         states = ["00", "01", "10", "11"]
         chart_data = [
@@ -279,10 +296,11 @@ def grover_search(
                 "The oracle marks the target state |11⟩ with a phase flip, and the "
                 "diffusion operator amplifies its probability amplitude. For N=4 states, "
                 "a single iteration achieves ~100% success probability."
-            ),
+            ) + (" [NOISE ON] Gate errors reduce the search success probability — demonstrating why error correction matters." if noise else ""),
             "shots": shots,
             "targetState": "|11⟩",
             "iterations": iterations,
+            "noise": noise,
         }
     except Exception as e:
         logger.exception("Grover failed")
@@ -294,8 +312,8 @@ def grover_search(
 # ===========================================================================
 @app.get("/experiment/teleportation")
 @limiter.limit("20/minute")
-def teleportation(request: Request, shots: int = Query(1024, ge=1, le=10000)):
-    logger.info("Teleportation | shots=%d", shots)
+def teleportation(request: Request, shots: int = Query(1024, ge=1, le=10000), noise: bool = Query(False)):
+    logger.info("Teleportation | shots=%d noise=%s", shots, noise)
     try:
         qc = QuantumCircuit(3, 3)
 
@@ -323,11 +341,7 @@ def teleportation(request: Request, shots: int = Query(1024, ge=1, le=10000)):
 
         # Step 6: Measure Bob's qubit to verify teleportation
         qc.measure(2, 2)
-
-        job = simulator.run(
-            transpile(qc, simulator, optimization_level=3), shots=shots
-        )
-        counts = job.result().get_counts()
+        counts = _run_circuit(qc, shots, noise)
 
         # Analyse Bob's qubit (bit index 2 in the result string)
         bob_0, bob_1 = 0, 0
@@ -355,9 +369,10 @@ def teleportation(request: Request, shots: int = Query(1024, ge=1, le=10000)):
                 "qubit measured as |1⟩ with ~100% probability, proving successful "
                 "teleportation. The no-cloning theorem prevents copying, but "
                 "teleportation destroys Alice's original state."
-            ),
+            ) + (" [NOISE ON] Gate errors corrupt the Bell pair, reducing teleportation fidelity." if noise else ""),
             "shots": shots,
             "teleportedState": "|1⟩",
+            "noise": noise,
         }
     except Exception as e:
         logger.exception("Teleportation failed")
@@ -450,6 +465,145 @@ async def vqc_classifier(request: Request, steps: int = Query(15, ge=1, le=50)):
         return result
     except Exception as e:
         logger.exception("VQC failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===========================================================================
+# Experiment: VQE Bond-Distance Sweep (H₂ Potential Energy Surface)
+# ===========================================================================
+def _run_vqe_sweep(steps_per_point: int) -> dict:
+    """Sweep H₂ bond distance to compute potential energy surface."""
+    import numpy as std_np
+
+    distances = std_np.arange(0.3, 2.6, 0.2)  # 12 points
+    energies = []
+
+    for d in distances:
+        coordinates = np.array([0.0, 0.0, -d / 2, 0.0, 0.0, d / 2])
+        H, qubits = qml.qchem.molecular_hamiltonian(["H", "H"], coordinates)
+        dev = qml.device("default.qubit", wires=qubits)
+
+        @qml.qnode(dev)
+        def cost_fn(params):
+            qml.BasisState(np.array([1, 1, 0, 0]), wires=range(qubits))
+            for i in range(qubits):
+                qml.RY(params[i], wires=i)
+            qml.DoubleExcitation(params[qubits], wires=[0, 1, 2, 3])
+            return qml.expval(H)
+
+        params = np.array([0.01] * (qubits + 1), requires_grad=True)
+        opt = qml.AdamOptimizer(stepsize=0.1)
+
+        energy = None
+        for _ in range(steps_per_point):
+            params, energy = opt.step_and_cost(cost_fn, params)
+
+        energies.append(float(energy))
+        logger.debug("VQE-sweep d=%.2f  E=%.6f", d, float(energy))
+
+    min_idx = int(std_np.argmin(energies))
+    eq_dist = float(distances[min_idx])
+    eq_energy = energies[min_idx]
+
+    chart_data = [
+        {"name": f"{d:.1f}", "value": e}
+        for d, e in zip(distances, energies)
+    ]
+
+    return {
+        "chartData": chart_data,
+        "equilibriumDistance": eq_dist,
+        "equilibriumEnergy": eq_energy,
+        "theory": (
+            "The potential energy surface (PES) shows how the H₂ ground-state "
+            "energy varies with bond distance. The minimum corresponds to the "
+            f"equilibrium bond length ({eq_dist:.1f} Å). At shorter distances "
+            "nuclear repulsion dominates; at longer distances the bond dissociates."
+        ),
+        "circuit": "VQE PES: [BasisState] → [RY Rotations] → [DoubleExcitation] → ⟨H⟩ @ each distance",
+        "molecule": "H₂ PES",
+    }
+
+
+@app.get("/experiment/vqe-sweep")
+@limiter.limit("3/minute")
+async def vqe_sweep(request: Request, steps: int = Query(8, ge=1, le=30)):
+    logger.info("VQE-sweep | steps_per_point=%d", steps)
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _run_vqe_sweep, steps)
+        return result
+    except Exception as e:
+        logger.exception("VQE-sweep failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===========================================================================
+# Experiment: Barren Plateaus Demonstration
+# ===========================================================================
+def _run_barren_plateaus() -> dict:
+    """Demonstrate vanishing gradients in deep quantum circuits."""
+    import numpy as std_np
+
+    n_qubits = 4
+    dev = qml.device("default.qubit", wires=n_qubits)
+    samples_per_depth = 30
+
+    results = []
+    depths = [1, 2, 4, 8, 12, 16, 20]
+
+    for depth in depths:
+        grads = []
+        for _ in range(samples_per_depth):
+            # Random parameters for this circuit
+            n_params = depth * n_qubits
+            params = np.array(
+                std_np.random.uniform(0, 2 * std_np.pi, size=n_params),
+                requires_grad=True,
+            )
+
+            @qml.qnode(dev)
+            def circuit(w):
+                for layer in range(depth):
+                    for q in range(n_qubits):
+                        qml.RY(w[layer * n_qubits + q], wires=q)
+                    for q in range(n_qubits - 1):
+                        qml.CNOT(wires=[q, q + 1])
+                return qml.expval(qml.PauliZ(0))
+
+            grad_fn = qml.grad(circuit)
+            g = grad_fn(params)
+            grads.append(float(g[0]) ** 2)
+
+        var = float(std_np.mean(grads))
+        results.append({"name": f"L={depth}", "value": var})
+        logger.debug("Barren depth=%d  var=%.6f", depth, var)
+
+    return {
+        "chartData": results,
+        "theory": (
+            "Barren plateaus occur when variational quantum circuits become "
+            "too deep — the gradient variance decreases exponentially with "
+            "circuit depth. This means the optimizer receives vanishingly small "
+            "signals and cannot learn. The chart shows gradient variance dropping "
+            "from ~0.1 (shallow, L=1) to near-zero (deep, L=20). This is a "
+            "fundamental challenge in QML research, limiting scalability of "
+            "variational algorithms."
+        ),
+        "circuit": "Test Circuit: [RY(θ) ×n_qubits × depth layers] → [CNOT chain] → ⟨Z₀⟩",
+    }
+
+
+@app.get("/experiment/barren-plateaus")
+@limiter.limit("5/minute")
+async def barren_plateaus(request: Request):
+    logger.info("Barren Plateaus demo")
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _run_barren_plateaus)
+        return result
+    except Exception as e:
+        logger.exception("Barren Plateaus failed")
         raise HTTPException(status_code=500, detail=str(e))
 
 

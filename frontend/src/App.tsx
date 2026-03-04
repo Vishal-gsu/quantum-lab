@@ -15,6 +15,7 @@ export default function App() {
   const backendStatus = useBackendHealth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [shots, setShots] = useState(1024);
+  const [noiseEnabled, setNoiseEnabled] = useState(false);
 
   // Derive a label for the header from the current route
   const activeLabel = location.pathname.startsWith('/experiment')
@@ -38,13 +39,15 @@ export default function App() {
           activeLabel={activeLabel}
           shots={shots}
           onShotsChange={setShots}
+          noiseEnabled={noiseEnabled}
+          onNoiseToggle={setNoiseEnabled}
         />
 
         <div className="p-12 max-w-7xl mx-auto">
           <AnimatePresence mode="wait">
             <Routes>
               <Route path="/" element={<Dashboard backendStatus={backendStatus} />} />
-              <Route path="/experiment/:id" element={<ExperimentView backendStatus={backendStatus} shots={shots} />} />
+              <Route path="/experiment/:id" element={<ExperimentView backendStatus={backendStatus} shots={shots} noiseEnabled={noiseEnabled} />} />
               <Route path="/study" element={<StudyView />} />
               <Route path="/study/:docId" element={<StudyView />} />
             </Routes>

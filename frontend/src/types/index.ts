@@ -29,6 +29,9 @@ export interface ExperimentResult {
     teleportedState?: string;
     targetState?: string;
     iterations?: number;
+    noise?: boolean;
+    equilibriumDistance?: number;
+    equilibriumEnergy?: number;
 }
 
 // ---------------------------------------------------------------------------

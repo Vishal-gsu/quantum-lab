@@ -2,11 +2,16 @@ import { useState, useCallback } from 'react';
 import { api } from '../lib/api.ts';
 import type { ExperimentResult } from '../types/index.ts';
 
+// Qiskit-based experiments that support the noise toggle
+const NOISE_SUPPORTED = new Set(['qrng-1bit', 'coin-flip', 'qrng-8bit', 'grover', 'teleportation']);
+// Experiments that use training steps instead of shots
+// (Used in endpoint routing logic below)
+
 interface UseExperimentReturn {
     result: ExperimentResult | null;
     loading: boolean;
     errorMsg: string | null;
-    run: (id: string, shots: number) => Promise<void>;
+    run: (id: string, shots: number, noiseEnabled: boolean) => Promise<void>;
     reset: () => void;
 }
 
@@ -23,7 +28,7 @@ export function useExperiment(): UseExperimentReturn {
         setErrorMsg(null);
     }, []);
 
-    const run = useCallback(async (id: string, shots: number) => {
+    const run = useCallback(async (id: string, shots: number, noiseEnabled: boolean) => {
         setLoading(true);
         setResult(null);
         setErrorMsg(null);
@@ -34,8 +39,17 @@ export function useExperiment(): UseExperimentReturn {
                 endpoint = `experiment/vqe-h2?steps=${Math.floor(Math.min(shots / 20, 100)) || 15}`;
             } else if (id === 'vqc') {
                 endpoint = `experiment/vqc?steps=${Math.floor(Math.min(shots / 70, 50)) || 15}`;
+            } else if (id === 'vqe-sweep') {
+                endpoint = `experiment/vqe-sweep?steps=${Math.floor(Math.min(shots / 100, 30)) || 8}`;
+            } else if (id === 'barren-plateaus') {
+                endpoint = `experiment/barren-plateaus`;
             } else {
                 endpoint = `experiment/${id}?shots=${shots}`;
+            }
+
+            // Append noise param for Qiskit experiments
+            if (noiseEnabled && NOISE_SUPPORTED.has(id)) {
+                endpoint += `&noise=true`;
             }
 
             const res = await api.get(endpoint);

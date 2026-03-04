@@ -1,4 +1,4 @@
-import { Zap, Binary, Cpu as Chip, Atom, Rocket, Send, Brain } from 'lucide-react';
+import { Zap, Binary, Cpu as Chip, Atom, Rocket, Send, Brain, TrendingDown, Layers } from 'lucide-react';
 import type { ExperimentConfig, DocFile } from '../types/index.ts';
 
 export const experiments: ExperimentConfig[] = [
@@ -9,6 +9,8 @@ export const experiments: ExperimentConfig[] = [
     { id: 'grover', name: "Grover's Search", icon: Rocket, color: '#f43f5e', status: 'Ready' },
     { id: 'teleportation', name: 'Teleportation', icon: Send, color: '#06b6d4', status: 'Ready' },
     { id: 'vqc', name: 'VQC Classifier', icon: Brain, color: '#f97316', status: 'Ready' },
+    { id: 'vqe-sweep', name: 'VQE Energy Surface', icon: TrendingDown, color: '#10b981', status: 'Ready' },
+    { id: 'barren-plateaus', name: 'Barren Plateaus', icon: Layers, color: '#ec4899', status: 'Ready' },
 ];
 
 export const docFiles: DocFile[] = [
