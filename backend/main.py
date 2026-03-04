@@ -3,6 +3,7 @@ import logging
 import os
 
 from fastapi import FastAPI, Query, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -249,6 +250,58 @@ async def vqe_h2(request: Request, steps: int = Query(15, ge=1, le=100)):
         logger.exception("VQE-H2 failed")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+def _vqe_stream_generator(steps: int):
+    """Generator that yields SSE events for each VQE optimization step."""
+    import json
+
+    symbols = ["H", "H"]
+    coordinates = np.array([0.0, 0.0, -0.35, 0.0, 0.0, 0.35])
+    H, qubits = qml.qchem.molecular_hamiltonian(symbols, coordinates)
+    dev = qml.device("default.qubit", wires=qubits)
+
+    @qml.qnode(dev)
+    def cost_fn(params):
+        qml.BasisState(np.array([1, 1, 0, 0]), wires=range(qubits))
+        for i in range(qubits):
+            qml.RY(params[i], wires=i)
+        qml.DoubleExcitation(params[qubits], wires=[0, 1, 2, 3])
+        return qml.expval(H)
+
+    history = []
+    params = np.array([0.01, 0.01, 0.01, 0.01, 0.01], requires_grad=True)
+    opt = qml.AdamOptimizer(stepsize=0.1)
+
+    energy = None
+    for i in range(steps):
+        params, energy = opt.step_and_cost(cost_fn, params)
+        e_val = float(energy)
+        history.append({"name": f"S{i + 1}", "value": e_val})
+        yield f"data: {json.dumps({'epoch': i + 1, 'total': steps, 'loss': e_val, 'progress': (i + 1) / steps})}\n\n"
+
+    result = {
+        "finalEnergy": float(energy),
+        "chartData": history,
+        "theory": (
+            "The Variational Quantum Eigensolver (VQE) computes the ground-state "
+            "energy of H\u2082 by iteratively optimising a parameterised quantum circuit. "
+            "Each step adjusts gate angles to minimise \u27e8\u03c8|H|\u03c8\u27e9."
+        ),
+        "circuit": "VQE: [BasisState] \u2192 [RY Rotations] \u2192 [DoubleExcitation] \u2192 \u27e8H\u27e9",
+        "molecule": "H\u2082 (0.7 \u00c5)",
+    }
+    yield f"data: {json.dumps({'done': True, 'result': result})}\n\n"
+
+
+@app.get("/experiment/vqe-h2/stream")
+@limiter.limit("5/minute")
+def vqe_stream(request: Request, steps: int = Query(15, ge=1, le=100)):
+    logger.info("VQE stream | steps=%d", steps)
+    return StreamingResponse(
+        _vqe_stream_generator(steps),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 # ===========================================================================
 # Experiment: Grover's Search (2-qubit, target |11⟩)

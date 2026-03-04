@@ -9,6 +9,8 @@ export interface ExperimentConfig {
     icon: LucideIcon;
     color: string;
     status: 'Ready' | 'WIP';
+    description: string;
+    difficulty: 'Easy' | 'Medium' | 'Hard';
 }
 
 export interface ChartDataPoint {

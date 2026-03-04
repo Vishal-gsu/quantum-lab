@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { experiments } from '../lib/constants.ts';
 import { useExperiment } from '../hooks/useExperiment.ts';
+import SkeletonChart from '../components/SkeletonChart.tsx';
 import type { BackendStatus, ExperimentConfig } from '../types/index.ts';
 
 // Experiments that render as AreaChart (training curves / continuous data)
@@ -33,7 +34,7 @@ interface ExperimentViewProps {
 export default function ExperimentView({ backendStatus, shots, noiseEnabled }: ExperimentViewProps) {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { result, loading, errorMsg, run, reset } = useExperiment();
+    const { result, loading, errorMsg, progress, liveChart, run, reset } = useExperiment();
     const exp = experiments.find((e: ExperimentConfig) => e.id === id);
 
     // Reset result when switching experiments via URL
@@ -113,8 +114,21 @@ export default function ExperimentView({ backendStatus, shots, noiseEnabled }: E
                         <div className="bg-slate-900/50 border border-white/5 rounded-[3rem] p-14 backdrop-blur-md shadow-inner relative">
                             {loading && (
                                 <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-sm rounded-[3rem] flex flex-col items-center justify-center space-y-6">
-                                    <div className="w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                    <p className="font-black text-xs uppercase tracking-[0.5em] animate-pulse">{loadingText}</p>
+                                    {progress != null ? (
+                                        <>
+                                            <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden">
+                                                <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500" style={{ width: `${progress * 100}%` }} />
+                                            </div>
+                                            <p className="font-black text-xs uppercase tracking-[0.5em] text-blue-400">
+                                                Epoch {Math.round(progress * (Math.floor(Math.min(shots / 20, 100)) || 15))}/{Math.floor(Math.min(shots / 20, 100)) || 15}
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                            <p className="font-black text-xs uppercase tracking-[0.5em] animate-pulse">{loadingText}</p>
+                                        </>
+                                    )}
                                 </div>
                             )}
                             <h3 className="text-xs font-black uppercase tracking-[0.5em] text-slate-500 mb-12 flex items-center gap-4">
@@ -122,10 +136,10 @@ export default function ExperimentView({ backendStatus, shots, noiseEnabled }: E
                                 {id === 'vqe-sweep' ? 'Potential Energy Surface' : id === 'barren-plateaus' ? 'Gradient Variance vs Depth' : 'Statistical Amplitude Distribution'}
                             </h3>
                             <div className="w-full h-[400px]">
-                                {result?.chartData ? (
+                                {(result?.chartData || liveChart.length > 0) ? (
                                     <ResponsiveContainer width="100%" height="100%">
                                         {AREA_CHART_IDS.has(id || '') ? (
-                                            <AreaChart data={result.chartData}>
+                                            <AreaChart data={result?.chartData || liveChart}>
                                                 <defs><linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={areaColor} stopOpacity={0.2} /><stop offset="95%" stopColor={areaColor} stopOpacity={0} /></linearGradient></defs>
                                                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff03" vertical={false} />
                                                 <XAxis dataKey="name" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
@@ -134,19 +148,19 @@ export default function ExperimentView({ backendStatus, shots, noiseEnabled }: E
                                                 <Area type="monotone" dataKey="value" stroke={areaColor} strokeWidth={5} fill="url(#colorVal)" dot={{ r: 6, fill: areaColor, strokeWidth: 2, stroke: '#020617' }} />
                                             </AreaChart>
                                         ) : (
-                                            <BarChart data={result.chartData}>
+                                            <BarChart data={result?.chartData || []}>
                                                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff03" vertical={false} />
                                                 <XAxis dataKey="name" stroke="#475569" fontSize={10} hide={id === 'qrng-8bit'} axisLine={false} tickLine={false} />
                                                 <YAxis stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
                                                 <Tooltip contentStyle={{ backgroundColor: '#020617', border: 'none', borderRadius: '15px' }} />
                                                 <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={id === 'qrng-8bit' ? 2 : 120}>
-                                                    {result.chartData.map((_: unknown, i: number) => <Cell key={`c-${i}`} fill={i % 2 === 0 ? '#3b82f6' : '#6366f1'} />)}
+                                                    {(result?.chartData || []).map((_: unknown, i: number) => <Cell key={`c-${i}`} fill={i % 2 === 0 ? '#3b82f6' : '#6366f1'} />)}
                                                 </Bar>
                                             </BarChart>
                                         )}
                                     </ResponsiveContainer>
                                 ) : (
-                                    <div className="h-full flex flex-col items-center justify-center space-y-8"><Activity size={80} className="text-slate-800 opacity-20" /><p className="font-black text-[10px] uppercase tracking-[0.5em] text-slate-700">Protocol Not Started</p></div>
+                                    <SkeletonChart variant={AREA_CHART_IDS.has(id || '') ? 'area' : 'bar'} barCount={id === 'qrng-8bit' ? 16 : 6} />
                                 )}
                             </div>
                         </div>
