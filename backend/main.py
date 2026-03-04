@@ -365,18 +365,92 @@ def teleportation(request: Request, shots: int = Query(1024, ge=1, le=10000)):
 
 
 # ===========================================================================
-# Experiment: VQC Binary Classifier — WIP
-# Blocked by PennyLane/autograd tensor shape compatibility issue.
-# StronglyEntanglingLayers and manual Rot gates both fail during
-# autograd differentiation. Will be fixed in a future PennyLane update.
+# Experiment: VQC Binary Classifier (async — heavy PennyLane computation)
+# Uses scalar loss accumulation to avoid autograd shape bug.
 # ===========================================================================
+def _run_vqc(epochs: int) -> dict:
+    """Variational Quantum Classifier on make_moons dataset."""
+    import numpy as std_np
+
+    # Dataset — standard numpy for data prep
+    from sklearn.datasets import make_moons
+    X_raw, y_raw = make_moons(n_samples=60, noise=0.15, random_state=42)
+    X_np = (X_raw - X_raw.min(axis=0)) / (X_raw.max(axis=0) - X_raw.min(axis=0)) * std_np.pi
+
+    n_qubits, n_layers = 2, 2
+    n_params = n_layers * n_qubits * 3  # 12 total
+    dev = qml.device("default.qubit", wires=n_qubits)
+
+    @qml.qnode(dev, interface="autograd")
+    def circuit(w, x):
+        for i in range(n_qubits):
+            qml.RX(x[i], wires=i)
+        idx = 0
+        for _ in range(n_layers):
+            for i in range(n_qubits):
+                qml.Rot(w[idx], w[idx + 1], w[idx + 2], wires=i)
+                idx += 3
+            qml.CNOT(wires=[0, 1])
+        return qml.expval(qml.PauliZ(0))
+
+    # Scalar loss accumulation — avoids np.array([circuit(...)]) autograd bug
+    def cost_fn(w):
+        loss = 0.0
+        for i in range(len(y_raw)):
+            x_i = np.array(X_np[i], requires_grad=False)
+            pred = circuit(w, x_i)
+            prob = (1.0 - pred) / 2.0
+            prob = prob * 0.9998 + 0.0001  # numerically stable clamp
+            loss = loss - (y_raw[i] * np.log(prob) + (1.0 - y_raw[i]) * np.log(1.0 - prob))
+        return loss / len(y_raw)
+
+    # Init flat 1D params
+    std_np.random.seed(42)
+    w = np.array(std_np.random.uniform(-0.5, 0.5, size=n_params), requires_grad=True)
+    opt = qml.GradientDescentOptimizer(stepsize=0.4)
+
+    history = []
+    for epoch in range(epochs):
+        w, loss_val = opt.step_and_cost(cost_fn, w)
+        history.append({"name": f"E{epoch + 1}", "value": float(loss_val)})
+        logger.debug("VQC epoch %d/%d  loss=%.4f", epoch + 1, epochs, float(loss_val))
+
+    # Final accuracy
+    correct = 0
+    for i in range(len(y_raw)):
+        x_i = np.array(X_np[i], requires_grad=False)
+        pred = float(circuit(w, x_i))
+        if (pred < 0) == (y_raw[i] == 1):
+            correct += 1
+    accuracy = correct / len(y_raw)
+
+    return {
+        "finalAccuracy": accuracy,
+        "chartData": history,
+        "theory": (
+            "A Variational Quantum Classifier (VQC) is the quantum analogue of a "
+            "neural network. Classical data is encoded into quantum states via angle "
+            "encoding (RX gates), then processed through parameterized entangling "
+            "layers (Rot + CNOT). The PauliZ measurement maps to class probabilities, "
+            "and a classical optimizer tunes the gate parameters to minimise "
+            "binary cross-entropy loss."
+        ),
+        "circuit": "VQC: [Angle Encoding RX] → [Rot + CNOT ×2 layers] → [⟨Z⟩ Measurement]",
+        "dataset": "make_moons (60 pts, 2D)",
+    }
+
+
 @app.get("/experiment/vqc")
 @limiter.limit("5/minute")
-def vqc_placeholder(request: Request):
-    raise HTTPException(
-        status_code=501,
-        detail="VQC Classifier is under development — coming in v2.1",
-    )
+async def vqc_classifier(request: Request, steps: int = Query(15, ge=1, le=50)):
+    logger.info("VQC | epochs=%d", steps)
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _run_vqc, steps)
+        return result
+    except Exception as e:
+        logger.exception("VQC failed")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ===========================================================================

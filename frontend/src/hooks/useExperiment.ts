@@ -29,9 +29,14 @@ export function useExperiment(): UseExperimentReturn {
         setErrorMsg(null);
 
         try {
-            const endpoint = id === 'vqe-h2'
-                ? `experiment/vqe-h2?steps=${Math.floor(Math.min(shots / 20, 100)) || 15}`
-                : `experiment/${id}?shots=${shots}`;
+            let endpoint: string;
+            if (id === 'vqe-h2') {
+                endpoint = `experiment/vqe-h2?steps=${Math.floor(Math.min(shots / 20, 100)) || 15}`;
+            } else if (id === 'vqc') {
+                endpoint = `experiment/vqc?steps=${Math.floor(Math.min(shots / 70, 50)) || 15}`;
+            } else {
+                endpoint = `experiment/${id}?shots=${shots}`;
+            }
 
             const res = await api.get(endpoint);
             setResult(res.data);

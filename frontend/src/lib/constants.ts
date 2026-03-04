@@ -8,7 +8,7 @@ export const experiments: ExperimentConfig[] = [
     { id: 'vqe-h2', name: 'VQE Solver', icon: Atom, color: '#22c55e', status: 'Ready' },
     { id: 'grover', name: "Grover's Search", icon: Rocket, color: '#f43f5e', status: 'Ready' },
     { id: 'teleportation', name: 'Teleportation', icon: Send, color: '#06b6d4', status: 'Ready' },
-    { id: 'vqc', name: 'VQC Classifier', icon: Brain, color: '#f97316', status: 'WIP' },
+    { id: 'vqc', name: 'VQC Classifier', icon: Brain, color: '#f97316', status: 'Ready' },
 ];
 
 export const docFiles: DocFile[] = [
