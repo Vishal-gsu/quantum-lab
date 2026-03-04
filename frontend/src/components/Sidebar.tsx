@@ -22,8 +22,8 @@ const SidebarItem = ({ icon: Icon, label, active, onClick, collapsed }: SidebarI
     <button
         onClick={onClick}
         className={`w-full flex items-center px-4 py-3.5 rounded-2xl transition-all relative group mb-1 ${active
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_-5px_rgba(37,99,235,0.5)]'
-                : 'text-slate-400 hover:bg-white/5 hover:text-white'
+            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_-5px_rgba(37,99,235,0.5)]'
+            : 'text-slate-400 hover:bg-white/5 hover:text-white'
             }`}
     >
         <div className="flex items-center justify-center min-w-[24px]">
@@ -89,7 +89,7 @@ export default function Sidebar({ collapsed, onMouseEnter, onMouseLeave, backend
                     {experiments.map((exp: ExperimentConfig) => (
                         <SidebarItem
                             key={exp.id}
-                            icon={exp.id === 'grover' ? Lock : exp.icon}
+                            icon={exp.status === 'WIP' ? Lock : exp.icon}
                             label={exp.name}
                             active={activeExpId === exp.id}
                             collapsed={collapsed}

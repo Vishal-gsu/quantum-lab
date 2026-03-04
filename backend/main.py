@@ -29,10 +29,12 @@ limiter = Limiter(key_func=get_remote_address)
 # ---------------------------------------------------------------------------
 # App
 # ---------------------------------------------------------------------------
+# Disable Swagger docs in production — no need to expose API schema publicly
+_is_production = bool(os.environ.get("RAILWAY_ENVIRONMENT"))
 app = FastAPI(
     title="Quantum Computing Expert API",
     version="2.1.0",
-    docs_url="/docs",
+    docs_url=None if _is_production else "/docs",
     redoc_url=None,
 )
 app.state.limiter = limiter
@@ -43,7 +45,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # ---------------------------------------------------------------------------
 ALLOWED_ORIGINS = os.environ.get(
     "CORS_ORIGINS",
-    "http://localhost:5173,http://localhost:8080,https://quantum-lab-production-b7ad.up.railway.app",
+    "http://localhost:5173,http://localhost:8080",
 ).split(",")
 
 app.add_middleware(
