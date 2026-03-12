@@ -1,0 +1,21 @@
+# Extends docker-compose.yml — adds local Ollama LLM
+# Use on machines with 16GB+ RAM
+# Run with: docker compose -f docker-compose.yml -f docker-compose.full.yml up
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  backend:
+    environment:
+      OLLAMA_URL: http://ollama:11434
+    depends_on:
+      - ollama
+
+volumes:
+  ollama_data:

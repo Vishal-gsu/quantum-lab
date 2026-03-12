@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 
+from config import get_settings
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -98,7 +99,7 @@ def get_circuit_text(qc: QuantumCircuit) -> str:
 @app.get("/")
 @app.get("/health")
 def health_check():
-    return {"status": "online", "message": "Quantum Computing API v2.1 — Ready"}
+    return {"status": "online", "message": "Quantum Computing API v2.1 — Ready", "version": "3.0.0-chimera"}
 
 
 # ===========================================================================
