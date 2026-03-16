@@ -56,4 +56,6 @@ export const docFiles: DocFile[] = [
     { id: '03_Quantum_Gates_and_Circuits.md', title: 'Gates & Logic', time: '30 min', level: 'Intermediate' },
     { id: '04_Classical_Machine_Learning_Review.md', title: 'Classical ML', time: '20 min', level: 'Intermediate' },
     { id: '05_Quantum_Machine_Learning_Intro.md', title: 'Intro to QML', time: '40 min', level: 'Advanced' },
+    { id: '11_Quantum_Computing_Essentials.md', title: 'QC Essentials', time: '60 min', level: 'Advanced' },
+    { id: '12_Classical_Genetic_Algorithms.md', title: 'Genetic Algorithms', time: '50 min', level: 'Advanced' },
 ];
