@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { api } from '../lib/api.ts';
+import { api, API_URL } from '../lib/api.ts';
 import type { ExperimentResult, ChartDataPoint } from '../types/index.ts';
 
 // Qiskit-based experiments that support the noise toggle
@@ -87,8 +87,7 @@ export function useExperiment(): UseExperimentReturn {
             // SSE streaming for supported experiments
             if (SSE_SUPPORTED.has(id)) {
                 const steps = Math.floor(Math.min(shots / 20, 100)) || 15;
-                const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000');
-                await runSSE(`${baseUrl}/experiment/${id}/stream?steps=${steps}`);
+                await runSSE(`${API_URL}/experiment/${id}/stream?steps=${steps}`);
             } else {
                 // Regular GET requests
                 let endpoint: string;

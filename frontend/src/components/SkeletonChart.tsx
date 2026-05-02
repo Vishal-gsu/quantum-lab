@@ -25,7 +25,7 @@ export default function SkeletonChart({ variant, barCount = 6 }: SkeletonChartPr
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="3"
-                        className="text-blue-500"
+                        className="text-teal-500"
                         initial={{ pathLength: 0, opacity: 0 }}
                         animate={{ pathLength: 1, opacity: 1 }}
                         transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
@@ -33,7 +33,7 @@ export default function SkeletonChart({ variant, barCount = 6 }: SkeletonChartPr
                     <motion.path
                         d="M0,150 C50,140 100,100 150,110 C200,120 250,60 300,80 C350,100 380,90 400,95 L400,200 L0,200 Z"
                         fill="currentColor"
-                        className="text-blue-500"
+                        className="text-teal-500"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 0.05 }}
                         transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
@@ -56,7 +56,7 @@ export default function SkeletonChart({ variant, barCount = 6 }: SkeletonChartPr
             {bars.map((bar, i) => (
                 <motion.div
                     key={i}
-                    className="flex-1 bg-gradient-to-t from-blue-500/10 to-blue-500/5 rounded-t-xl border border-white/5 relative"
+                    className="flex-1 bg-gradient-to-t from-teal-500/10 to-teal-500/5 rounded-t-xl border border-white/5 relative"
                     initial={{ height: 0, opacity: 0 }}
                     animate={{
                         height: `${bar.height}%`,
@@ -67,7 +67,7 @@ export default function SkeletonChart({ variant, barCount = 6 }: SkeletonChartPr
                         opacity: { duration: 2, repeat: Infinity, delay: bar.delay },
                     }}
                 >
-                    <div className="absolute inset-0 bg-gradient-to-t from-blue-500/20 to-transparent rounded-t-xl" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-teal-500/20 to-transparent rounded-t-xl" />
                 </motion.div>
             ))}
             <motion.p

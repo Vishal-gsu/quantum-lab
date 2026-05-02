@@ -50,12 +50,17 @@ export const experiments: ExperimentConfig[] = [
 ];
 
 export const docFiles: DocFile[] = [
-    { id: '00_Quick_Reference_Guide.md', title: 'Quick Reference', time: '5 min', level: 'Beginner' },
+    { id: '00_Quick_Reference_Guide.md', title: 'Quick Reference', time: '10 min', level: 'Beginner' },
     { id: '01_Quantum_Computing_Basics.md', title: 'Quantum Basics', time: '15 min', level: 'Beginner' },
-    { id: '02_Quantum_Mechanics_Fundamentals.md', title: 'Mechanics 101', time: '25 min', level: 'Intermediate' },
-    { id: '03_Quantum_Gates_and_Circuits.md', title: 'Gates & Logic', time: '30 min', level: 'Intermediate' },
+    { id: '02_Quantum_Mechanics_Fundamentals.md', title: 'QM Foundations', time: '25 min', level: 'Intermediate' },
+    { id: '03_Quantum_Gates_and_Circuits.md', title: 'Gates & Circuits', time: '30 min', level: 'Intermediate' },
     { id: '04_Classical_Machine_Learning_Review.md', title: 'Classical ML', time: '20 min', level: 'Intermediate' },
     { id: '05_Quantum_Machine_Learning_Intro.md', title: 'Intro to QML', time: '40 min', level: 'Advanced' },
+    { id: '06_Quantum_Algorithms.md', title: 'Quantum Algorithms', time: '45 min', level: 'Advanced' },
+    { id: '07_Programming_with_Qiskit.md', title: 'Programming with Qiskit', time: '50 min', level: 'Advanced' },
+    { id: '08_Hands_on_QML_Projects.md', title: 'Hands-On QML', time: '55 min', level: 'Advanced' },
+    { id: '09_Alternative_Frameworks_and_Future_Projects.md', title: 'Frameworks & Future', time: '45 min', level: 'Advanced' },
+    { id: '10_Project_Adaptation_Roadmap.md', title: 'Project Roadmap', time: '35 min', level: 'Intermediate' },
     { id: '11_Quantum_Computing_Essentials.md', title: 'QC Essentials', time: '60 min', level: 'Advanced' },
     { id: '12_Classical_Genetic_Algorithms.md', title: 'Genetic Algorithms', time: '50 min', level: 'Advanced' },
 ];

@@ -113,6 +113,27 @@ $$|\psi\rangle = \frac{1}{2}|0\rangle + \frac{\sqrt{3}}{2}|1\rangle$$
 
 Check: $\frac{1}{4} + \frac{3}{4} = 1$ ✓
 
+### Pauli operators (matrix form)
+
+Single-qubit gates you will see everywhere are the **Pauli matrices** (with identity $I$):
+
+$$
+I = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}, \quad
+X = \begin{bmatrix} 0 & 1 \\ 1 & 0 \end{bmatrix}, \quad
+Y = \begin{bmatrix} 0 & -i \\ i & 0 \end{bmatrix}, \quad
+Z = \begin{bmatrix} 1 & 0 \\ 0 & -1 \end{bmatrix}
+$$
+
+In **Dirac (outer-product) notation**:
+
+$$
+X = |0\rangle\langle 1| + |1\rangle\langle 0|, \quad
+Y = -i|0\rangle\langle 1| + i|1\rangle\langle 0|, \quad
+Z = |0\rangle\langle 0| - |1\rangle\langle 1|
+$$
+
+They satisfy $X^2 = Y^2 = Z^2 = I$ and the cyclic relation $XY = iZ$ (and permutations).
+
 ---
 
 ## The Bloch Sphere
@@ -230,10 +251,35 @@ Where: $|\alpha_{00}|^2 + |\alpha_{01}|^2 + |\alpha_{10}|^2 + |\alpha_{11}|^2 = 
 
 ### Vector Representation
 
-$$|00\rangle = \begin{bmatrix} 1 \\ 0 \\ 0 \\ 0 \end{bmatrix}, \quad
-|01\rangle = \begin{bmatrix} 0 \\ 1 \\ 0 \\ 0 \end{bmatrix}, \quad
-|10\rangle = \begin{bmatrix} 0 \\ 0 \\ 1 \\ 0 \end{bmatrix}, \quad
-|11\rangle = \begin{bmatrix} 0 \\ 0 \\ 0 \\ 1 \end{bmatrix}$$
+Each **computational basis** ket for two qubits is a **column vector of length 4** in $\mathbb{C}^4$. The general state $|\psi\rangle$ above is exactly such a vector with components $(\alpha_{00},\alpha_{01},\alpha_{10},\alpha_{11})^T$.
+
+**Basis layout (how to read the entries):**
+
+```text
+  index:   00      01      10      11
+           ↓       ↓       ↓       ↓
+  vector: [ a00 ,  a01 ,  a10 ,  a11 ]ᵀ   ←  one complex amplitude per classical outcome
+```
+
+**Standard basis kets** (one-hot vectors — only one entry is $1$, the rest $0$):
+
+$$
+|00\rangle = \begin{bmatrix} 1 \\ 0 \\ 0 \\ 0 \end{bmatrix}
+$$
+
+$$
+|01\rangle = \begin{bmatrix} 0 \\ 1 \\ 0 \\ 0 \end{bmatrix}
+$$
+
+$$
+|10\rangle = \begin{bmatrix} 0 \\ 0 \\ 1 \\ 0 \end{bmatrix}
+$$
+
+$$
+|11\rangle = \begin{bmatrix} 0 \\ 0 \\ 0 \\ 1 \end{bmatrix}
+$$
+
+**Takeaway:** “Vector representation” means writing the same quantum state either in **Dirac notation** ($\sum \alpha_{ij}|ij\rangle$) or as an explicit **column vector** of amplitudes — they carry the same information. Normalization is $\sum_{ij}|\alpha_{ij}|^2 = 1$.
 
 ### Tensor Product (⊗)
 
@@ -299,7 +345,7 @@ $$\langle\phi|\psi\rangle = \begin{bmatrix} \phi_0^* & \phi_1^* \end{bmatrix} \b
 
 **Result:** A complex number
 
-### Examples
+### Inner product examples
 
 #### Orthogonal States
 $$\langle 0|1\rangle = \begin{bmatrix} 1 & 0 \end{bmatrix} \begin{bmatrix} 0 \\ 1 \end{bmatrix} = 0$$

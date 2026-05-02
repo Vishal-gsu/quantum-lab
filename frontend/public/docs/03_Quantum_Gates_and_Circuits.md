@@ -8,11 +8,12 @@ Just like classical computers use logic gates (AND, OR, NOT), quantum computers 
 
 ## Table of Contents
 1. [What are Quantum Gates?](#what-are-quantum-gates)
-2. [Single-Qubit Gates](#single-qubit-gates)
-3. [Multi-Qubit Gates](#multi-qubit-gates)
-4. [Quantum Circuits](#quantum-circuits)
-5. [Universal Gate Sets](#universal-gate-sets)
-6. [Circuit Identities](#circuit-identities)
+2. [Vector representation](#vector-representation)
+3. [Single-Qubit Gates](#single-qubit-gates)
+4. [Multi-Qubit Gates](#multi-qubit-gates)
+5. [Quantum Circuits](#quantum-circuits)
+6. [Universal Gate Sets](#universal-gate-sets)
+7. [Circuit Identities](#circuit-identities)
 
 ---
 
@@ -43,6 +44,30 @@ A gate acting on a qubit is represented as matrix multiplication:
 $$|\psi'\rangle = U|\psi\rangle$$
 
 Where $U$ is a unitary matrix.
+
+### Vector representation
+
+States stay **column vectors**; gates are **matrices**. For one qubit, $|\psi\rangle$ is a $2\times 1$ complex vector and $U$ is $2\times 2$:
+
+$$
+|\psi\rangle = \begin{bmatrix} \alpha \\ \beta \end{bmatrix},
+\qquad
+|\psi'\rangle = U|\psi\rangle
+$$
+
+**Same idea for $n$ qubits:** the state lives in a $2^n$-dimensional complex vector space — each computational basis ket $|x\rangle$ is a column of zeros with a single $1$ in the row that matches the bitstring $x$.
+
+**Quick diagram — state vs gate:**
+
+```text
+        column vector          square matrix
+   |ψ⟩ =  ┌ α ┐              U = ┌ · · ┐
+          └ β ┘                  └ · · ┘
+
+   action:  |ψ'⟩ = U |ψ⟩     (matrix × vector)
+```
+
+Later in this chapter, two-qubit gates are $4\times 4$ matrices acting on $4\times 1$ vectors — always the same **linear algebra**, bigger sizes.
 
 ---
 

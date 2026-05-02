@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+/** Base URL with no trailing slash — safe for axios and EventSource concatenation */
+const raw = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = String(raw).replace(/\/+$/, '');
 
 const api = axios.create({
     baseURL: API_URL,

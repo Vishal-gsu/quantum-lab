@@ -28,19 +28,40 @@ npm install
 npm run dev
 ```
 
-## Deployment on Railway
+## Deployment (Vercel + Render)
 
-### Backend
-1. Link your GitHub repository to Railway.
-2. Railway will automatically detect the Python environment.
-3. Ensure you have a `requirements.txt` file.
-4. Set the start command to: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+Deploy the **FastAPI backend on Render** and the **Vite frontend on Vercel**. Set environment variables after both URLs exist.
 
-### Frontend
-1. Create a new service on Railway linked to the same repo.
-2. Set the root directory to `web_app/frontend`.
-3. Railway will build and deploy the Vite app.
-4. Set the `VITE_API_URL` to your backend's URL.
+### 1. Backend (Render)
+
+1. Push this repo to GitHub (or connect your Git provider).
+2. In [Render](https://render.com), create a **Web Service** from the repo (or use **Blueprints** with `render.yaml` at `quantum-lab/`).
+3. Set **Root Directory** to `backend`.
+4. **Build command:** `pip install -r requirements.txt`
+5. **Start command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+6. **Environment variables:**
+   - `CORS_ORIGINS` — your Vercel site origin(s), comma-separated, no path. Example: `https://my-app.vercel.app` (add `http://localhost:5173` during local dev if you want).
+   - Optional: `PRODUCTION=true` (disables `/docs`; Render also sets `RENDER` automatically).
+
+Copy the public service URL (for example `https://quantum-lab-api.onrender.com`).
+
+### 2. Frontend (Vercel)
+
+1. In [Vercel](https://vercel.com), **Import** the same repository.
+2. Set **Root Directory** to `frontend`.
+3. **Framework preset:** Vite (auto-detected).
+4. **Environment variable:** `VITE_API_URL` = your Render backend URL **without a trailing slash** (example: `https://quantum-lab-api.onrender.com`).
+5. Redeploy after changing env vars. `vercel.json` in `frontend/` rewrites client routes to `index.html` for React Router.
+
+### 3. Wire-up checklist
+
+- [ ] Backend health: open `YOUR_RENDER_URL/health` — you should see JSON `status: online`.
+- [ ] CORS: `CORS_ORIGINS` must include exactly the browser origin Vercel uses (production URL and preview URLs if you use them).
+- [ ] Frontend: dashboard should show **online** (polls `/` on the API). Experiments and VQE streaming use the same base URL.
+
+### Railway (alternative)
+
+Same backend start command; point `VITE_API_URL` at your Railway URL. Set `CORS_ORIGINS` to your frontend origin(s).
 
 ## First 4 Experiments Included:
 1. **1-Bit QRNG**: Quantum Random Number Generator (Hadamard gate).

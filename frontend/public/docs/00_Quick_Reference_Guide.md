@@ -63,9 +63,9 @@ $$|\Psi^-\rangle = \frac{1}{\sqrt{2}}(|01\rangle - |10\rangle)$$
 
 | Gate | Matrix | Effect | Qiskit |
 |------|--------|--------|--------|
-| **X** (NOT) | $\begin{bmatrix} 0 & 1 \\ 1 & 0 \end{bmatrix}$ | Bit flip: $\|0\rangle \leftrightarrow \|1\rangle$ | `qc.x(q)` |
+| **X** (NOT) | $\begin{bmatrix} 0 & 1 \\ 1 & 0 \end{bmatrix}$ | Bit flip: $\vert 0\rangle \leftrightarrow \vert 1\rangle$ | `qc.x(q)` |
 | **Y** | $\begin{bmatrix} 0 & -i \\ i & 0 \end{bmatrix}$ | Bit + phase flip | `qc.y(q)` |
-| **Z** | $\begin{bmatrix} 1 & 0 \\ 0 & -1 \end{bmatrix}$ | Phase flip: $\|1\rangle \to -\|1\rangle$ | `qc.z(q)` |
+| **Z** | $\begin{bmatrix} 1 & 0 \\ 0 & -1 \end{bmatrix}$ | Phase flip: $\vert 1\rangle \to -\vert 1\rangle$ | `qc.z(q)` |
 | **H** (Hadamard) | $\frac{1}{\sqrt{2}}\begin{bmatrix} 1 & 1 \\ 1 & -1 \end{bmatrix}$ | Creates superposition | `qc.h(q)` |
 | **S** | $\begin{bmatrix} 1 & 0 \\ 0 & i \end{bmatrix}$ | Phase gate (90°) | `qc.s(q)` |
 | **T** | $\begin{bmatrix} 1 & 0 \\ 0 & e^{i\pi/4} \end{bmatrix}$ | π/8 gate (45°) | `qc.t(q)` |
@@ -78,7 +78,7 @@ $$|\Psi^-\rangle = \frac{1}{\sqrt{2}}(|01\rangle - |10\rangle)$$
 | Gate | Effect | Circuit | Qiskit |
 |------|--------|---------|--------|
 | **CNOT** | Flips target if control=1 | `──●──`<br>`  │  `<br>`──⊕──` | `qc.cx(c, t)` |
-| **CZ** | Phase flip on \|11⟩ | `──●──`<br>`  │  `<br>`──●──` | `qc.cz(c, t)` |
+| **CZ** | Phase flip on $\vert 11\rangle$ | `──●──`<br>`  │  `<br>`──●──` | `qc.cz(c, t)` |
 | **SWAP** | Exchanges two qubits | `──×──`<br>`  │  `<br>`──×──` | `qc.swap(a, b)` |
 
 ### Three-Qubit Gates

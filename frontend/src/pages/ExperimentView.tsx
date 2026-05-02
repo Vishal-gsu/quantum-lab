@@ -2,218 +2,355 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-    Zap, Activity, ChevronLeft, Sparkles, BarChart3,
-    Terminal, Image as ImageIcon, AlertCircle, Rocket, Flame,
+  Zap,
+  Activity,
+  ChevronLeft,
+  Sparkles,
+  BarChart3,
+  Terminal,
+  AlertCircle,
+  Rocket,
+  Flame,
+  Cpu,
 } from 'lucide-react';
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-    ResponsiveContainer, AreaChart, Area, Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  Cell,
 } from 'recharts';
 import { experiments } from '../lib/constants.ts';
 import { useExperiment } from '../hooks/useExperiment.ts';
 import SkeletonChart from '../components/SkeletonChart.tsx';
 import type { BackendStatus, ExperimentConfig } from '../types/index.ts';
 
-// Experiments that render as AreaChart (training curves / continuous data)
 const AREA_CHART_IDS = new Set(['vqe-h2', 'vqc', 'vqe-sweep', 'barren-plateaus']);
 
-// Gradient colors per experiment
 const AREA_COLORS: Record<string, string> = {
-    'vqe-h2': '#22c55e',
-    'vqc': '#f97316',
-    'vqe-sweep': '#10b981',
-    'barren-plateaus': '#ec4899',
+  'vqe-h2': '#34d399',
+  vqc: '#fb923c',
+  'vqe-sweep': '#2dd4bf',
+  'barren-plateaus': '#f472b6',
+};
+
+const chartTooltipStyle = {
+  backgroundColor: '#0f172a',
+  border: '1px solid rgba(99,116,154,0.35)',
+  borderRadius: '12px',
+  fontSize: '12px',
 };
 
 interface ExperimentViewProps {
-    backendStatus: BackendStatus;
-    shots: number;
-    noiseEnabled: boolean;
+  backendStatus: BackendStatus;
+  shots: number;
+  noiseEnabled: boolean;
 }
 
 export default function ExperimentView({ backendStatus, shots, noiseEnabled }: ExperimentViewProps) {
-    const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate();
-    const { result, loading, errorMsg, progress, liveChart, run, reset } = useExperiment();
-    const exp = experiments.find((e: ExperimentConfig) => e.id === id);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { result, loading, errorMsg, progress, liveChart, run, reset } = useExperiment();
+  const exp = experiments.find((e: ExperimentConfig) => e.id === id);
 
-    // Reset result when switching experiments via URL
-    useEffect(() => { reset(); }, [id, reset]);
+  useEffect(() => {
+    reset();
+  }, [id, reset]);
 
-    if (!exp) {
-        navigate('/');
-        return null;
-    }
+  if (!exp) {
+    navigate('/');
+    return null;
+  }
 
-    // Loading text varies by experiment type
-    const loadingText = id === 'vqe-sweep' ? 'Computing Energy Surface...'
-        : id === 'barren-plateaus' ? 'Sampling Gradients...'
-            : id === 'vqe-h2' ? 'Training...'
-                : id === 'vqc' ? 'Training Classifier...'
-                    : 'Simulating...';
+  const loadingText =
+    id === 'vqe-sweep'
+      ? 'Mapping energy surface…'
+      : id === 'barren-plateaus'
+        ? 'Sampling gradients…'
+        : id === 'vqe-h2'
+          ? 'Optimizing VQE…'
+          : id === 'vqc'
+            ? 'Training classifier…'
+            : 'Simulating…';
 
-    const areaColor = AREA_COLORS[id || ''] || '#3b82f6';
+  const areaColor = AREA_COLORS[id || ''] || '#2dd4bf';
 
-    return (
-        <motion.div key="experiment" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-12">
-            {/* Header Row */}
-            <div className="flex justify-between items-center">
-                <div className="space-y-4">
-                    <button onClick={() => navigate('/')} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-white mb-4"><ChevronLeft size={14} /> Back to Dashboard</button>
-                    <div className="flex items-center gap-4">
-                        <h2 className="text-5xl font-black tracking-tighter text-white">{exp.name}</h2>
-                        {result?.noise && (
-                            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400 text-[10px] font-black uppercase tracking-widest">
-                                <Flame size={12} className="animate-pulse" /> Noisy
-                            </span>
-                        )}
-                    </div>
+  return (
+    <motion.div
+      key="experiment"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      className="space-y-8 pb-12 sm:space-y-10"
+    >
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 space-y-3">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 transition hover:text-teal-300"
+          >
+            <ChevronLeft size={14} />
+            Back to hub
+          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">{exp.name}</h2>
+            {result?.noise && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/35 bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-200">
+                <Flame size={12} className="animate-pulse" />
+                Noise model
+              </span>
+            )}
+          </div>
+          <p className="max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">{exp.description}</p>
+        </div>
+        {exp.status !== 'WIP' && (
+          <button
+            type="button"
+            onClick={() => run(exp.id, shots, noiseEnabled)}
+            disabled={loading || backendStatus === 'offline'}
+            className={`inline-flex shrink-0 items-center justify-center gap-3 rounded-2xl px-8 py-4 text-sm font-bold uppercase tracking-wide shadow-xl transition sm:min-w-[220px] ${
+              backendStatus === 'offline'
+                ? 'cursor-not-allowed bg-slate-800 text-slate-500'
+                : 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white hover:from-teal-400 hover:to-emerald-500'
+            }`}
+          >
+            {loading ? <Activity className="animate-spin" size={22} /> : <Zap size={22} />}
+            {loading ? loadingText : backendStatus === 'offline' ? 'Offline' : 'Run simulation'}
+          </button>
+        )}
+      </div>
+
+      {errorMsg && (
+        <motion.div
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex gap-4 rounded-2xl border border-rose-500/25 bg-rose-500/10 p-6 text-rose-100"
+        >
+          <AlertCircle size={26} className="mt-0.5 shrink-0" />
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-rose-200">Run failed</h4>
+            <p className="mt-2 text-sm font-medium">{errorMsg}</p>
+          </div>
+        </motion.div>
+      )}
+
+      {exp.status === 'WIP' ? (
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[var(--learn-surface)] px-8 py-20 text-center">
+          <Rocket size={72} className="mx-auto text-amber-400" />
+          <h3 className="mt-6 text-2xl font-bold text-white">Coming soon</h3>
+          <p className="mx-auto mt-3 max-w-md text-slate-400">This protocol is still being wired up.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-12">
+          <div className="space-y-8 xl:col-span-8">
+            {result?.theory && (
+              <div
+                className={`rounded-2xl border p-6 sm:p-8 ${
+                  result.noise
+                    ? 'border-amber-500/25 bg-amber-500/[0.07]'
+                    : 'border-teal-500/20 bg-teal-500/[0.06]'
+                }`}
+              >
+                <div className="flex gap-4 sm:gap-6">
+                  <Sparkles
+                    className={`mt-1 shrink-0 ${result.noise ? 'text-amber-400' : 'text-teal-400'}`}
+                    size={28}
+                  />
+                  <div>
+                    <h4
+                      className={`text-[11px] font-bold uppercase tracking-[0.25em] ${
+                        result.noise ? 'text-amber-300' : 'text-teal-300'
+                      }`}
+                    >
+                      What this run demonstrates
+                    </h4>
+                    <p className="mt-3 text-base font-medium leading-relaxed text-slate-200 sm:text-lg">
+                      {result.theory}
+                    </p>
+                  </div>
                 </div>
-                {exp.status !== 'WIP' && (
-                    <button onClick={() => run(exp.id, shots, noiseEnabled)} disabled={loading || backendStatus === 'offline'} className={`px-12 py-5 rounded-2xl font-black transition-all shadow-2xl flex items-center space-x-4 uppercase tracking-widest text-sm ${backendStatus === 'offline' ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-white text-black hover:bg-blue-600 hover:text-white'}`}>
-                        {loading ? <Activity className="animate-spin" size={20} /> : <Zap size={20} />}
-                        <span>{loading ? loadingText : (backendStatus === 'offline' ? 'Offline' : 'Run Protocol')}</span>
-                    </button>
+              </div>
+            )}
+
+            <div className="relative overflow-hidden rounded-2xl border border-[var(--learn-border)] bg-[var(--learn-surface)] p-6 sm:p-8">
+              {loading && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-5 rounded-2xl bg-[#070b14]/75 backdrop-blur-sm">
+                  {progress != null ? (
+                    <>
+                      <div className="h-2 w-56 overflow-hidden rounded-full bg-slate-800">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-teal-400 to-violet-500 transition-all duration-300"
+                          style={{ width: `${progress * 100}%` }}
+                        />
+                      </div>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-teal-300">
+                        Step{' '}
+                        {Math.round(progress * (Math.floor(Math.min(shots / 20, 100)) || 15))} /{' '}
+                        {Math.floor(Math.min(shots / 20, 100)) || 15}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-12 w-12 animate-spin rounded-full border-2 border-teal-400 border-t-transparent" />
+                      <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-400">{loadingText}</p>
+                    </>
+                  )}
+                </div>
+              )}
+              <h3 className="mb-8 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-500">
+                <BarChart3 size={18} className="text-teal-400" />
+                {id === 'vqe-sweep'
+                  ? 'Potential energy surface'
+                  : id === 'barren-plateaus'
+                    ? 'Gradient variance vs depth'
+                    : 'Measurement statistics'}
+              </h3>
+              <div className="h-[340px] w-full sm:h-[400px]">
+                {result?.chartData || liveChart.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    {AREA_CHART_IDS.has(id || '') ? (
+                      <AreaChart data={result?.chartData || liveChart}>
+                        <defs>
+                          <linearGradient id="expAreaFill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={areaColor} stopOpacity={0.25} />
+                            <stop offset="95%" stopColor={areaColor} stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
+                        <XAxis dataKey="name" stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} />
+                        <YAxis stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={chartTooltipStyle} />
+                        <Area
+                          type="monotone"
+                          dataKey="value"
+                          stroke={areaColor}
+                          strokeWidth={3}
+                          fill="url(#expAreaFill)"
+                          dot={{ r: 4, fill: areaColor, strokeWidth: 0 }}
+                        />
+                      </AreaChart>
+                    ) : (
+                      <BarChart data={result?.chartData || []}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
+                        <XAxis
+                          dataKey="name"
+                          stroke="#64748b"
+                          fontSize={10}
+                          hide={id === 'qrng-8bit'}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={chartTooltipStyle} />
+                        <Bar dataKey="value" radius={[10, 10, 0, 0]} barSize={id === 'qrng-8bit' ? 2 : 100}>
+                          {(result?.chartData || []).map((_: unknown, i: number) => (
+                            <Cell key={`c-${i}`} fill={i % 2 === 0 ? '#2dd4bf' : '#818cf8'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    )}
+                  </ResponsiveContainer>
+                ) : (
+                  <SkeletonChart variant={AREA_CHART_IDS.has(id || '') ? 'area' : 'bar'} barCount={id === 'qrng-8bit' ? 16 : 6} />
                 )}
+              </div>
             </div>
 
-            {/* Error */}
-            {errorMsg && (
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-red-500/10 border border-red-500/20 p-8 rounded-[2.5rem] flex items-start gap-6 text-red-400">
-                    <AlertCircle size={32} className="shrink-0" />
+            {/* Circuit — learning-style “lab notebook” */}
+            <div className="overflow-hidden rounded-2xl border border-[var(--learn-border-strong)] bg-[#050810] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-teal-500/20 bg-gradient-to-r from-teal-950/40 to-slate-950/80 px-4 py-3">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-teal-200/90">
+                  <Terminal size={16} />
+                  Transpiled circuit (ASCII)
+                </div>
+                <span className="font-mono-circuit text-[10px] text-slate-500">{exp.id}</span>
+              </div>
+              <div className="p-4 sm:p-6">
+                <div className="max-h-[min(420px,55vh)] overflow-auto rounded-xl border border-teal-500/15 bg-[#020508] p-4 sm:p-5">
+                  <pre className="font-mono-circuit text-[11px] leading-relaxed text-teal-100/95 sm:text-xs">
+                    {result?.circuit?.trim()
+                      ? result.circuit
+                      : '// Run a simulation to compile the circuit and show Qiskit’s text diagram here.'}
+                  </pre>
+                </div>
+                <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-slate-500">
+                  <Cpu size={14} className="mt-0.5 shrink-0 text-violet-400" />
+                  Circuits are executed on the <strong className="text-slate-400">Aer QASM simulator</strong> with
+                  optional depolarizing noise (toggle in the header).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <aside className="space-y-6 xl:col-span-4">
+            <div className="rounded-2xl border border-[var(--learn-border)] bg-[var(--learn-surface)] p-6 sm:p-7">
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.25em] text-violet-300">Lab readout</h3>
+              <dl className="mt-6 space-y-5">
+                {[
+                  { l: 'Simulator', v: 'Qiskit Aer' },
+                  { l: 'Backend', v: 'qasm_simulator' },
+                  { l: 'Compile', v: 'optimization_level=3' },
+                ].map(row => (
+                  <div key={row.l} className="border-b border-white/5 pb-4 last:border-0 last:pb-0">
+                    <dt className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{row.l}</dt>
+                    <dd className="mt-1 text-sm font-semibold text-white">{row.v}</dd>
+                  </div>
+                ))}
+                {result?.finalEnergy != null && (
+                  <div className="pt-2">
+                    <dt className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+                      Ground-state energy
+                    </dt>
+                    <dd className="mt-1 font-mono-circuit text-3xl font-bold text-white">
+                      {result.finalEnergy.toFixed(5)} <span className="text-sm font-semibold text-slate-500">Ha</span>
+                    </dd>
+                  </div>
+                )}
+                {result?.finalAccuracy != null && (
+                  <div className="pt-2">
+                    <dt className="text-[10px] font-semibold uppercase tracking-wider text-amber-400">Accuracy</dt>
+                    <dd className="mt-1 text-3xl font-bold text-white">
+                      {(result.finalAccuracy * 100).toFixed(1)}
+                      <span className="text-sm font-semibold text-slate-500">%</span>
+                    </dd>
+                  </div>
+                )}
+                {result?.equilibriumDistance != null && (
+                  <div className="space-y-4 pt-2">
                     <div>
-                        <h4 className="font-black uppercase tracking-widest text-sm mb-2 text-red-500">Execution Error</h4>
-                        <p className="text-lg font-medium">{errorMsg}</p>
-                        <p className="text-xs mt-4 opacity-60">Check the backend logs for trace details.</p>
+                      <dt className="text-[10px] font-semibold uppercase tracking-wider text-teal-400">
+                        Equilibrium distance
+                      </dt>
+                      <dd className="mt-1 text-2xl font-bold text-white">
+                        {result.equilibriumDistance.toFixed(1)}{' '}
+                        <span className="text-sm text-slate-500">Å</span>
+                      </dd>
                     </div>
-                </motion.div>
-            )}
-
-            {exp.status === 'WIP' ? (
-                <div className="bg-slate-900 border border-white/5 rounded-[4rem] p-32 text-center space-y-8 relative overflow-hidden">
-                    <Rocket size={100} className="mx-auto text-orange-500 animate-pulse" />
-                    <h3 className="text-4xl font-black">Coming Soon</h3>
-                    <p className="text-slate-500 max-w-lg mx-auto text-xl">This experiment is under active development. Check back in the next release!</p>
-                    <div className="absolute inset-0 bg-gradient-to-t from-orange-500/5 to-transparent pointer-events-none" />
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-                    <div className="lg:col-span-3 space-y-12">
-                        {/* Theory */}
-                        {result?.theory && (
-                            <div className={`border rounded-[3rem] p-12 flex gap-10 items-start ${result.noise ? 'bg-amber-600/10 border-amber-500/20' : 'bg-blue-600/10 border-blue-500/20'}`}>
-                                <Sparkles className={`shrink-0 ${result.noise ? 'text-amber-500' : 'text-blue-500'}`} size={40} />
-                                <div>
-                                    <h4 className={`text-xs font-black uppercase tracking-[0.4em] mb-4 ${result.noise ? 'text-amber-400' : 'text-blue-400'}`}>Quantum Knowledge Base</h4>
-                                    <p className="text-slate-300 text-xl font-medium leading-relaxed italic">"{result.theory}"</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Chart */}
-                        <div className="bg-slate-900/50 border border-white/5 rounded-[3rem] p-14 backdrop-blur-md shadow-inner relative">
-                            {loading && (
-                                <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-sm rounded-[3rem] flex flex-col items-center justify-center space-y-6">
-                                    {progress != null ? (
-                                        <>
-                                            <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                                <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500" style={{ width: `${progress * 100}%` }} />
-                                            </div>
-                                            <p className="font-black text-xs uppercase tracking-[0.5em] text-blue-400">
-                                                Epoch {Math.round(progress * (Math.floor(Math.min(shots / 20, 100)) || 15))}/{Math.floor(Math.min(shots / 20, 100)) || 15}
-                                            </p>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                            <p className="font-black text-xs uppercase tracking-[0.5em] animate-pulse">{loadingText}</p>
-                                        </>
-                                    )}
-                                </div>
-                            )}
-                            <h3 className="text-xs font-black uppercase tracking-[0.5em] text-slate-500 mb-12 flex items-center gap-4">
-                                <BarChart3 size={20} className="text-blue-500" />
-                                {id === 'vqe-sweep' ? 'Potential Energy Surface' : id === 'barren-plateaus' ? 'Gradient Variance vs Depth' : 'Statistical Amplitude Distribution'}
-                            </h3>
-                            <div className="w-full h-[400px]">
-                                {(result?.chartData || liveChart.length > 0) ? (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        {AREA_CHART_IDS.has(id || '') ? (
-                                            <AreaChart data={result?.chartData || liveChart}>
-                                                <defs><linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={areaColor} stopOpacity={0.2} /><stop offset="95%" stopColor={areaColor} stopOpacity={0} /></linearGradient></defs>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff03" vertical={false} />
-                                                <XAxis dataKey="name" stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
-                                                <YAxis stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
-                                                <Tooltip contentStyle={{ backgroundColor: '#020617', border: 'none', borderRadius: '15px' }} />
-                                                <Area type="monotone" dataKey="value" stroke={areaColor} strokeWidth={5} fill="url(#colorVal)" dot={{ r: 6, fill: areaColor, strokeWidth: 2, stroke: '#020617' }} />
-                                            </AreaChart>
-                                        ) : (
-                                            <BarChart data={result?.chartData || []}>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff03" vertical={false} />
-                                                <XAxis dataKey="name" stroke="#475569" fontSize={10} hide={id === 'qrng-8bit'} axisLine={false} tickLine={false} />
-                                                <YAxis stroke="#475569" fontSize={10} axisLine={false} tickLine={false} />
-                                                <Tooltip contentStyle={{ backgroundColor: '#020617', border: 'none', borderRadius: '15px' }} />
-                                                <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={id === 'qrng-8bit' ? 2 : 120}>
-                                                    {(result?.chartData || []).map((_: unknown, i: number) => <Cell key={`c-${i}`} fill={i % 2 === 0 ? '#3b82f6' : '#6366f1'} />)}
-                                                </Bar>
-                                            </BarChart>
-                                        )}
-                                    </ResponsiveContainer>
-                                ) : (
-                                    <SkeletonChart variant={AREA_CHART_IDS.has(id || '') ? 'area' : 'bar'} barCount={id === 'qrng-8bit' ? 16 : 6} />
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Circuit section */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="bg-[#020617] border border-white/5 rounded-[3rem] p-10 relative overflow-hidden group min-h-[350px]">
-                                <h3 className="text-xs font-black uppercase tracking-[0.4em] text-slate-500 mb-8 flex items-center gap-3"><ImageIcon size={18} className="text-blue-500" /> Circuit Blueprint</h3>
-                                <div className="w-full h-48 bg-slate-900/50 rounded-2xl border border-white/5 flex flex-col items-center justify-center text-center p-6">
-                                    <Sparkles size={32} className="text-slate-700 mb-4" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">circuit-{id}.png placeholder</p>
-                                </div>
-                            </div>
-                            <div className="bg-[#020617] border border-white/5 rounded-[3rem] p-10 relative overflow-hidden group">
-                                <h3 className="text-xs font-black uppercase tracking-[0.4em] text-slate-500 mb-8 flex items-center gap-3"><Terminal size={18} className="text-purple-500" /> Compiled ASCII Logic</h3>
-                                <div className="bg-black/60 rounded-2xl p-6 border border-white/5 overflow-x-auto h-48 scrollbar-hide">
-                                    <pre className="text-indigo-400 font-mono text-xs leading-none whitespace-pre italic select-all">
-                                        {result?.circuit || '// No Logic Compiled'}
-                                    </pre>
-                                </div>
-                            </div>
-                        </div>
+                    <div>
+                      <dt className="text-[10px] font-semibold uppercase tracking-wider text-teal-400">Min energy</dt>
+                      <dd className="mt-1 font-mono-circuit text-xl font-bold text-white">
+                        {result.equilibriumEnergy?.toFixed(5)} Ha
+                      </dd>
                     </div>
-
-                    {/* Metadata Sidebar */}
-                    <div className="space-y-10">
-                        <div className="bg-white/5 border border-white/5 rounded-[2.5rem] p-10 backdrop-blur-sm">
-                            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-blue-500 mb-10">System Status</h3>
-                            <div className="space-y-8">
-                                {[{ l: 'Simulator', v: 'Aer 0.17' }, { l: 'Architecture', v: 'Statevector' }, { l: 'Compiler', v: 'Level 3' }].map(i => (
-                                    <div key={i.l} className="flex flex-col gap-2 border-b border-white/5 pb-6 last:border-0"><span className="text-[9px] text-slate-600 font-black uppercase tracking-[0.2em]">{i.l}</span><span className="text-xs font-black text-white">{i.v}</span></div>
-                                ))}
-                                {result?.finalEnergy && <div className="pt-6"><p className="text-[9px] font-black text-green-500 uppercase tracking-widest mb-3">Ground State Potential</p><p className="text-5xl font-black text-white tracking-tighter">{result.finalEnergy.toFixed(5)} <span className="text-xs text-slate-500 font-bold">Ha</span></p></div>}
-                                {result?.finalAccuracy != null && <div className="pt-6"><p className="text-[9px] font-black text-orange-500 uppercase tracking-widest mb-3">Classification Accuracy</p><p className="text-5xl font-black text-white tracking-tighter">{(result.finalAccuracy * 100).toFixed(1)}<span className="text-xs text-slate-500 font-bold">%</span></p></div>}
-                                {result?.equilibriumDistance != null && (
-                                    <div className="pt-6 space-y-4">
-                                        <div><p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-3">Equilibrium Distance</p><p className="text-4xl font-black text-white tracking-tighter">{result.equilibriumDistance.toFixed(1)} <span className="text-xs text-slate-500 font-bold">Å</span></p></div>
-                                        <div><p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-3">Min Energy</p><p className="text-3xl font-black text-white tracking-tighter">{result.equilibriumEnergy?.toFixed(5)} <span className="text-xs text-slate-500 font-bold">Ha</span></p></div>
-                                    </div>
-                                )}
-                                {result?.noise && (
-                                    <div className="pt-6">
-                                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4">
-                                            <p className="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-2">Noise Model</p>
-                                            <p className="text-xs text-amber-300/70 leading-relaxed">Depolarizing: 1% (1q) / 2% (2q)</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </motion.div>
-    );
+                  </div>
+                )}
+                {result?.noise && (
+                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-amber-200">Noise</p>
+                    <p className="mt-2 text-xs text-amber-100/80">Depolarizing 1% (1q) / 2% (2q)</p>
+                  </div>
+                )}
+              </dl>
+            </div>
+          </aside>
+        </div>
+      )}
+    </motion.div>
+  );
 }

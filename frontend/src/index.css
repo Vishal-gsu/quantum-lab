@@ -1,14 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "DM Sans", system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #020617;
 
+  --learn-bg: #070b14;
+  --learn-bg-elevated: #0c1220;
+  --learn-surface: #111827;
+  --learn-surface-hover: #161f32;
+  --learn-border: rgba(99, 116, 154, 0.22);
+  --learn-border-strong: rgba(129, 140, 248, 0.35);
+  --learn-text: #e2e8f0;
+  --learn-muted: #8b9cb8;
+  --learn-accent: #2dd4bf;
+  --learn-accent-dim: rgba(45, 212, 191, 0.15);
+  --learn-violet: #a78bfa;
+  --learn-violet-dim: rgba(167, 139, 250, 0.12);
+  --learn-warm: #fb923c;
+  --learn-glow: rgba(45, 212, 191, 0.08);
+
+  color: var(--learn-text);
+  background-color: var(--learn-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -17,12 +31,164 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
 }
 
 #root {
   width: 100%;
+  min-height: 100vh;
 }
+
+/* Subtle grid + vignette for main learning canvas */
+.learn-canvas {
+  background-color: var(--learn-bg);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -30%, rgba(45, 212, 191, 0.12), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 100% 0%, rgba(167, 139, 250, 0.08), transparent 45%),
+    linear-gradient(rgba(99, 116, 154, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 116, 154, 0.06) 1px, transparent 1px);
+  background-size: auto, auto, 48px 48px, 48px 48px;
+}
+
+.font-mono-circuit {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 116, 154, 0.45);
+  border-radius: 999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(45, 212, 191, 0.45);
+}
+
+/* KaTeX on dark curriculum pages */
+.markdown-study .katex {
+  font-size: 1.05em;
+  color: #e2e8f0;
+}
+
+.markdown-study .katex .mord,
+.markdown-study .katex .mrel,
+.markdown-study .katex .mbin {
+  color: inherit;
+}
+
+.markdown-study .katex-display {
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.markdown-study .katex-error {
+  color: #f87171;
+}
+
+/* Lesson reader — full width of content column (no narrow column + empty gutter) */
+.study-article {
+  width: 100%;
+  max-width: none;
+}
+
+.study-article pre:not(.katex *) {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+}
+
+.study-article .hljs,
+.study-article pre code {
+  font-family: inherit;
+}
+
+/* Curriculum reading comfort */
+.study-article.markdown-study p {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+
+@media (min-width: 1280px) {
+  .study-article.markdown-study p {
+    font-size: 1.125rem;
+  }
+}
+
+/* --- Dashboard-only: quantum-style ambient + border shimmer --- */
+@keyframes dashboard-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dashboard-beam {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.dashboard-quantum-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Soft rotating glow behind dashboard content */
+.dashboard-quantum-shell::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -80px;
+  width: min(100%, 900px);
+  height: 380px;
+  transform: translateX(-50%);
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(45, 212, 191, 0.12),
+    transparent 25%,
+    rgba(167, 139, 250, 0.14),
+    transparent 55%,
+    rgba(45, 212, 191, 0.1),
+    transparent 80%,
+    rgba(167, 139, 250, 0.08)
+  );
+  animation: dashboard-orbit 18s linear infinite;
+  filter: blur(48px);
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Animated gradient frame (1px) for hero */
+.dashboard-hero-frame {
+  position: relative;
+  border-radius: 1.5rem;
+  padding: 1px;
+  background: linear-gradient(
+    120deg,
+    rgba(45, 212, 191, 0.45),
+    rgba(167, 139, 250, 0.35),
+    rgba(45, 212, 191, 0.25),
+    rgba(129, 140, 248, 0.4),
+    rgba(45, 212, 191, 0.45)
+  );
+  background-size: 200% 200%;
+  animation: dashboard-beam 7s ease-in-out infinite;
+  box-shadow: 0 0 40px -12px rgba(45, 212, 191, 0.25), 0 0 60px -20px rgba(167, 139, 250, 0.2);
+}
+
+.dashboard-hero-frame > .dashboard-hero-inner {
+  border-radius: calc(1.5rem - 1px);
+  background: linear-gradient(145deg, #101a2e 0%, #0c1424 45%, #080d18 100%);
+}
+
